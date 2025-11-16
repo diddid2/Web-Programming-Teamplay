@@ -1,14 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
     String userId = (String) session.getAttribute("userId");
+	request.setAttribute("currentMenu", "home");
 %>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>강남 타임 - 메인</title>
+    <title>강남타임 - 메인</title>
 
-    <!-- 기본 리셋 & 폰트 -->
     <style>
         * {
             margin: 0;
@@ -20,13 +20,11 @@
             background: #0f172a;
             color: #e5e7eb;
         }
-
         a {
             text-decoration: none;
             color: inherit;
         }
 
-        /* 상단 네비게이션 */
         header {
             position: sticky;
             top: 0;
@@ -107,7 +105,6 @@
             opacity: 0.9;
         }
 
-        /* 메인 컨테이너 */
         main {
             max-width: 1100px;
             margin: 0 auto;
@@ -117,7 +114,6 @@
             gap: 32px;
         }
 
-        /* 왼쪽 영역: 인사 + 공지 + 빠른 메뉴 */
         .left-panel {
             display: flex;
             flex-direction: column;
@@ -137,11 +133,13 @@
         .welcome-sub {
             font-size: 13px;
             color: #9ca3af;
+            line-height: 1.5;
         }
         .welcome-highlight {
             color: #38bdf8;
             font-weight: 600;
         }
+
         .notice-card {
             border-radius: 16px;
             padding: 14px 16px;
@@ -189,7 +187,6 @@
             margin-left: 10px;
         }
 
-        /* 오른쪽: 메인 메뉴 카드 그리드 */
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -243,7 +240,6 @@
             font-size: 11px;
         }
 
-        /* 하단 푸터 */
         footer {
             border-top: 1px solid rgba(31, 41, 55, 0.9);
             padding: 16px 20px 30px;
@@ -261,134 +257,122 @@
 </head>
 <body>
 
-<header>
-    <div class="nav-inner">
-        <div class="logo">
-            <div class="logo-mark">KT</div>
-            <span>KangnamTime</span>
-        </div>
-        <nav class="nav-links">
-            <a href="main.jsp">홈</a>
-            <a href="timetable.jsp">시간표</a>
-            <a href="board_list.jsp">게시판</a>
-            <a href="review_list.jsp">강의평가</a>
-            <a href="campus_info.jsp">캠퍼스 정보</a>
-        </nav>
-        <div class="nav-auth">
-            <%
-                if (userId == null) {
-            %>
-                <button class="btn-outline" onclick="location.href='login.jsp'">로그인</button>
-                <button class="btn-primary" onclick="location.href='signup.jsp'">회원가입</button>
-            <%
-                } else {
-            %>
-                <span><strong><%= userId %></strong> 님</span>
-                <button class="btn-outline" onclick="location.href='mypage.jsp'">마이페이지</button>
-                <button class="btn-primary" onclick="location.href='logout.jsp'">로그아웃</button>
-            <%
-                }
-            %>
-        </div>
-    </div>
-</header>
+<jsp:include page="/common/gnb.jsp"/>
 
 <main>
-    <!-- 왼쪽 -->
     <section class="left-panel">
         <div class="welcome-card">
             <div class="welcome-title">
-                오늘도 <span class="welcome-highlight">강남 타임</span>에서
+                강남대 전용 시간·과제·통학 <span class="welcome-highlight">올인원</span>
             </div>
             <div class="welcome-sub">
-                시간표 관리부터 강의평, 자유게시판까지  
-                한 곳에서 정리하는 우리 학교 전용 커뮤니티.
+                에브리타임 + e캠퍼스 + 달구지 정보를  
+                한 화면에서 관리하는 강남대 학생 전용 플랫폼입니다.
             </div>
         </div>
 
         <div class="notice-card">
             <div class="notice-header">
                 <span>📢 공지사항</span>
-                <span><a href="notice_list.jsp">더보기 ›</a></span>
+                <span><a href="notice/noticeList.jsp">더보기 ›</a></span>
             </div>
             <ul class="notice-list">
                 <li>
-                    <span class="notice-title"><a href="notice_view.jsp?id=1">[점검] 새벽 3시~4시 서비스 점검 안내</a></span>
-                    <span class="notice-date">2025-11-13</span>
+                    <span class="notice-title"><a href="notice/noticeView.jsp?id=1">[업데이트] AI 시간표 자동 생성 베타 오픈</a></span>
+                    <span class="notice-date">2025-11-14</span>
                 </li>
                 <li>
-                    <span class="notice-title"><a href="notice_view.jsp?id=2">2학기 중간고사 시험후기 게시판 오픈</a></span>
-                    <span class="notice-date">2025-10-21</span>
+                    <span class="notice-title"><a href="notice/noticeView.jsp?id=2">e캠퍼스 과제 연동 기능 추가 안내</a></span>
+                    <span class="notice-date">2025-11-10</span>
                 </li>
                 <li>
-                    <span class="notice-title"><a href="notice_view.jsp?id=3">프로젝트 팀원 모집 탭이 추가되었어요</a></span>
-                    <span class="notice-date">2025-09-30</span>
+                    <span class="notice-title"><a href="notice/noticeView.jsp?id=3">달구지 실시간 위치 조회 기능 안내</a></span>
+                    <span class="notice-date">2025-11-05</span>
                 </li>
             </ul>
         </div>
     </section>
 
-    <!-- 오른쪽: 메인 메뉴 -->
     <section>
         <div class="menu-grid">
 
-            <a href="timetable.jsp" class="menu-card">
+            <!-- 게시판 -->
+            <a href="board/mainBoard.jsp" class="menu-card">
                 <div>
-                    <div class="menu-tag">TIME TABLE</div>
-                    <div class="menu-title">시간표 관리</div>
+                    <div class="menu-tag">BOARD</div>
+                    <div class="menu-title">게시판</div>
                     <div class="menu-desc">
-                        학기별 시간표를 등록하고  
-                        요일·교시별로 한눈에 확인해보세요.
+                        메인 게시판에서 실시간 학교 이야기 확인하고,  
+                        핫게시판에서 오늘 제일 뜨거운 글만 모아서 봅니다.
                     </div>
                 </div>
                 <div class="menu-footer">
-                    <span class="pill">+ 새 강의 추가</span>
-                    <span>최근 수정: 오늘</span>
+                    <span class="pill">메인 · 핫게시판</span>
+                    <span>실시간 인기글</span>
                 </div>
             </a>
 
-            <a href="board_list.jsp" class="menu-card">
+            <!-- 캘린더 / 시간표 / AI 기능 -->
+            <a href="calendar/calendarMain.jsp" class="menu-card">
                 <div>
-                    <div class="menu-tag">COMMUNITY</div>
-                    <div class="menu-title">자유·정보 게시판</div>
+                    <div class="menu-tag">CALENDAR · AI</div>
+                    <div class="menu-title">캘린더 & 시간표</div>
                     <div class="menu-desc">
-                        과제, 진로, 잡담까지  
-                        같은 학교 학생들과 이야기를 나눠보세요.
+                        기본 시간표 관리 +  
+                        학과/공강 요일을 입력하면 AI가 꿀강 위주로 시간표를 추천합니다.
                     </div>
                 </div>
                 <div class="menu-footer">
-                    <span class="pill">실시간 인기글</span>
-                    <span>새 글 12개</span>
+                    <span class="pill">AI 시간표 자동 생성</span>
+                    <span>에타·강남타임 강의평 분석</span>
                 </div>
             </a>
 
-            <a href="review_list.jsp" class="menu-card">
+            <!-- AI 과제 스케줄러 -->
+            <a href="calendar/assignmentScheduler.jsp" class="menu-card">
                 <div>
-                    <div class="menu-tag">COURSE REVIEW</div>
-                    <div class="menu-title">강의평가</div>
+                    <div class="menu-tag">AI SCHEDULER</div>
+                    <div class="menu-title">AI 과제 스케쥴러</div>
                     <div class="menu-desc">
-                        수강 전 선배들의 강의평을 보고  
-                        꿀강·지옥강을 미리 체크하세요.
+                        e캠퍼스 과제를 자동으로 불러와  
+                        마감일까지 캘린더에 표시하고, 가장 급한 순으로 정렬해 보여줍니다.
                     </div>
                 </div>
                 <div class="menu-footer">
-                    <span class="pill">평점별 정렬</span>
-                    <span>리뷰 247개</span>
+                    <span class="pill">마감 임박 순 정렬</span>
+                    <span>e캠퍼스 파싱</span>
                 </div>
             </a>
 
-            <a href="campus_info.jsp" class="menu-card">
+            <!-- 달구지 -->
+            <a href="dalguji/dalgujiMain.jsp" class="menu-card">
                 <div>
-                    <div class="menu-tag">CAMPUS LIFE</div>
-                    <div class="menu-title">캠퍼스 생활 정보</div>
+                    <div class="menu-tag">DALGUJI</div>
+                    <div class="menu-title">달구지 시간표 & 현황</div>
                     <div class="menu-desc">
-                        학식·셔틀·도서관·동아리 등  
-                        자주 쓰는 정보만 모아서 보여줍니다.
+                        요일별 달구지 시간표 이미지를 확인하고,  
+                        유비칸 차량 관제를 통해 실시간 위치를 지도에서 확인합니다.
                     </div>
                 </div>
                 <div class="menu-footer">
-                    <span class="pill">즐겨찾기 추가</span>
-                    <span>업데이트 예정</span>
+                    <span class="pill">실시간 위치 표시</span>
+                    <span>월·금 / 화·수·목 분리</span>
+                </div>
+            </a>
+
+            <!-- 설정 -->
+            <a href="settings/settings.jsp" class="menu-card">
+                <div>
+                    <div class="menu-tag">SETTINGS</div>
+                    <div class="menu-title">계정 & 연동 설정</div>
+                    <div class="menu-desc">
+                        에브리타임, 강남대 포털, e캠퍼스 계정을 저장해두고  
+                        위 모든 AI 기능들이 자동으로 연동되도록 설정합니다.
+                    </div>
+                </div>
+                <div class="menu-footer">
+                    <span class="pill">계정 연동 필수</span>
+                    <span>보안 저장</span>
                 </div>
             </a>
 
@@ -397,7 +381,7 @@
 </main>
 
 <footer>
-    © 2025 KangnamTime. JSP Web Programming Team Project.
+    © 2025 강남타임 (JSP Web Programming Project).
 </footer>
 
 </body>

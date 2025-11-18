@@ -482,7 +482,16 @@
             <div class="card-sub">
                 e캠퍼스에서 자동으로 불러오기 전, 과제를 직접 등록 테스트.
             </div>
-
+            
+			<form action="ecampusSync.jsp" method="post" style="margin-top:8px; text-align:right;">
+			    <button type="submit" style="
+			        border-radius:999px; border:none;
+			        padding:5px 10px; font-size:11px;
+			        background:#111827; color:#e5e7eb; cursor:pointer;">
+			        e캠퍼스 과제 동기화
+			    </button>
+			</form>
+						
             <form class="assign-form" action="assignmentProc.jsp" method="post">
                 <input type="hidden" name="year" value="<%= year %>">
                 <input type="hidden" name="month" value="<%= month %>">
@@ -585,9 +594,7 @@
             %>
             </div>
         </div>
-
     </section>
 </main>
-
 </body>
 </html>

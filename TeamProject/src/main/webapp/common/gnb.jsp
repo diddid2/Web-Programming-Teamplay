@@ -145,8 +145,11 @@
             <a href="<%= ctx %>/board/mainBoard.jsp"
                class="<%= "board".equals(currentMenu) ? "gnb-active" : "" %>">게시판</a>
 
+			<a href="<%= ctx %>/timetable/timetableMain.jsp"
+               class="<%= "calendar".equals(currentMenu) ? "gnb-active" : "" %>">시간표</a>
+
             <a href="<%= ctx %>/calendar/calendarMain.jsp"
-               class="<%= "calendar".equals(currentMenu) ? "gnb-active" : "" %>">캘린더</a>
+               class="<%= "timetable".equals(currentMenu) ? "gnb-active" : "" %>">캘린더</a>
 
             <a href="<%= ctx %>/dalguji/dalgujiMain.jsp"
                class="<%= "dalguji".equals(currentMenu) ? "gnb-active" : "" %>">달구지</a>

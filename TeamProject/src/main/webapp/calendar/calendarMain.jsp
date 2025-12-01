@@ -1,4 +1,4 @@
-<%@ page import="java.sql.*, java.util.*" %>
+<%@ page import="java.sql.*, java.util.*, java.text.*" %>
 <%@ page import="util.DBUtil" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
@@ -79,7 +79,8 @@
         conn = DBUtil.getConnection();
 
         String sql =
-            "SELECT ASSIGN_NO, TITLE, COURSE_NAME, START_DATE, DUE_DATE, PRIORITY " +
+            "SELECT ASSIGN_NO, TITLE, COURSE_NAME, START_DATE, DUE_DATE, PRIORITY, " +
+            "       IS_PASSED, LINK " +
             "FROM ASSIGNMENT " +
             "WHERE USER_ID = ? " +
             "  AND ( " +
@@ -98,12 +99,26 @@
         rs = pstmt.executeQuery();
 
         while (rs.next()) {
-            java.sql.Date dbStart = rs.getDate("START_DATE");
-            java.sql.Date dbDue   = rs.getDate("DUE_DATE");
-            if (dbDue == null) continue;
+            // ===== 오전 1시 이전 마감은 전날로 취급 =====
+            Timestamp dbStartTs = rs.getTimestamp("START_DATE");
+            Timestamp dbDueTs   = rs.getTimestamp("DUE_DATE");
+            if (dbDueTs == null) continue;
 
-            long rangeStartMs = (dbStart != null ? dbStart.getTime() : dbDue.getTime());
-            long rangeEndMs   = dbDue.getTime();
+            Calendar dueCal = Calendar.getInstance();
+            dueCal.setTimeInMillis(dbDueTs.getTime());
+            if (dueCal.get(Calendar.HOUR_OF_DAY) < 1) {
+                // 00:xx 이면 전날로
+                dueCal.add(Calendar.DAY_OF_MONTH, -1);
+            }
+            long rangeEndMs = dueCal.getTimeInMillis();
+
+            long rangeStartMs;
+            if (dbStartTs != null) {
+                rangeStartMs = dbStartTs.getTime();
+            } else {
+                rangeStartMs = rangeEndMs; // 시작일 없으면 마감 기준
+            }
+            // ================================
 
             long dispStartMs = Math.max(rangeStartMs, monthStartMs);
             long dispEndMs   = Math.min(rangeEndMs,   monthEndMs);
@@ -125,6 +140,8 @@
             item.put("PRIORITY",    rs.getInt("PRIORITY"));
             item.put("START_DAY",   startDayInMonth);
             item.put("END_DAY",     endDayInMonth);
+            item.put("IS_PASSED",   rs.getInt("IS_PASSED"));
+            item.put("LINK",        rs.getString("LINK"));
 
             monthAssignments.add(item);
         }
@@ -230,11 +247,13 @@
             color:#38bdf8;
         }
 
-        /* 과제막대 행 */
+        /* 과제막대 행 - 위쪽으로 최대한 붙이기 */
         .cal-bar-row td {
-            height:22px;
-            padding:2px 2px;
-            border-top:none; /* 위 날짜 행과 경계 최소화 */
+            height:18px;
+            padding:0 2px 1px;   /* 위쪽 패딩 0으로 빈 공간 최소화 */
+            border-top:none;
+            vertical-align:top;
+            background:#020617;
         }
         .cal-bar-row td.empty {
             background:#020617;
@@ -249,12 +268,18 @@
             white-space:nowrap;
             background:rgba(15,23,42,0.9);
             border:1px solid #4b5563;
+            cursor:default;
+            display:block;
         }
         .assign-bar.priority-1 {
             border-color:#facc15;
         }
         .assign-bar.priority-2 {
             border-color:#f97373;
+        }
+        /* 패스된 과제용 테두리 (우선순위보다 우선) */
+        .assign-bar.passed {
+            border-color:#16a34a !important;
         }
 
         /* 오른쪽 패널 */
@@ -352,6 +377,61 @@
             font-size:11px;
             color:#9ca3af;
         }
+
+        /* PASS 라벨 */
+        .pass-label {
+            display:inline-block;
+            margin-left:6px;
+            padding:2px 6px;
+            border-radius:999px;
+            font-size:10px;
+            background:#16a34a;
+            color:#ecfdf5;
+        }
+
+        /* 링크가 있는 urgent-item 클릭 스타일 */
+        .urgent-item.clickable {
+            cursor:pointer;
+        }
+        .urgent-item.clickable a.urgent-link {
+            display:block;
+            color:inherit;
+            text-decoration:none;
+        }
+        .urgent-item.clickable a.urgent-link:hover {
+            text-decoration:none;
+            opacity:0.96;
+        }
+
+        /* 툴팁 */
+        .assign-tooltip {
+            position:fixed;
+            z-index:9999;
+            background:#020617;
+            border:1px solid #4b5563;
+            border-radius:10px;
+            padding:8px 10px;
+            font-size:11px;
+            box-shadow:0 10px 30px rgba(15,23,42,0.7);
+            display:none;
+            max-width:260px;
+            pointer-events:none;
+        }
+        .assign-tooltip .tt-title {
+            font-weight:600;
+            margin-bottom:2px;
+        }
+        .assign-tooltip .tt-course {
+            color:#9ca3af;
+            margin-bottom:2px;
+        }
+        .assign-tooltip .tt-range {
+            color:#e5e7eb;
+            margin-bottom:2px;
+        }
+        .assign-tooltip .tt-priority {
+            color:#facc15;
+        }
     </style>
 </head>
 <body>
@@ -417,57 +497,145 @@
                         }
                     %>
                 </tr>
-
-                <%
-                    // 이 주에 걸쳐 있는 과제들만 골라서, 과제마다 한 줄씩 바 행을 만든다
+            <%
+                    // === 이 주에 속하는 과제들만 모으기 ===
+                    List<Map<String, Object>> weekList = new ArrayList<Map<String,Object>>();
                     for (Map<String, Object> a : monthAssignments) {
                         int sDay = (Integer)a.get("START_DAY");
                         int eDay = (Integer)a.get("END_DAY");
-
                         if (eDay < weekStartDay || sDay > weekEndDay) {
-                            continue; // 이 주와 겹치지 않음
+                            continue;
                         }
+                        weekList.add(a);
+                    }
 
-                        int barStartDay = Math.max(sDay, weekStartDay);
-                        int barEndDay   = Math.min(eDay, weekEndDay);
+                    // === lane(줄)별로 과제 배치 (겹치지 않게) ===
+                    List<List<Map<String,Object>>> lanes = new ArrayList<List<Map<String,Object>>>();
+                    for (Map<String,Object> a : weekList) {
+                        int sDay = (Integer)a.get("START_DAY");
+                        int eDay = (Integer)a.get("END_DAY");
 
-                        int barStartCol = barStartDay - weekStartDay + 1; // 1~7
-                        int barEndCol   = barEndDay   - weekStartDay + 1; // 1~7
-                        int span        = barEndCol - barStartCol + 1;
-
-                        String atitle = (String)a.get("TITLE");
-                        String course = (String)a.get("COURSE_NAME");
-                        int prio      = (Integer)a.get("PRIORITY");
-                        String prioClass = (prio == 2 ? "priority-2" : (prio == 1 ? "priority-1" : ""));
-                %>
-                <tr class="cal-bar-row">
-                    <%
-                        int col = 1;
-                        while (col <= 7) {
-                            if (col < barStartCol || col > barEndCol) {
-                    %>
-                        <td class="empty"></td>
-                    <%
-                                col++;
-                            } else {
-                                // 막대 시작 위치
-                    %>
-                        <td colspan="<%= span %>">
-                            <div class="assign-bar <%= prioClass %>">
-                                <%= (course != null ? "[" + course + "] " : "") %><%= atitle %>
-                            </div>
-                        </td>
-                    <%
-                                col += span;
+                        boolean placed = false;
+                        for (int li = 0; li < lanes.size() && !placed; li++) {
+                            List<Map<String,Object>> lane = lanes.get(li);
+                            boolean conflict = false;
+                            for (Map<String,Object> b : lane) {
+                                int bs = (Integer)b.get("START_DAY");
+                                int be = (Integer)b.get("END_DAY");
+                                // 날짜 범위가 겹치면 같은 줄에 배치 불가
+                                if (!(eDay < bs || sDay > be)) {
+                                    conflict = true;
+                                    break;
+                                }
+                            }
+                            if (!conflict) {
+                                lane.add(a);
+                                placed = true;
                             }
                         }
-                    %>
-                </tr>
-                <%
-                    } // end for assignments
-                %>
+                        if (!placed) {
+                            List<Map<String,Object>> newLane = new ArrayList<Map<String,Object>>();
+                            newLane.add(a);
+                            lanes.add(newLane);
+                        }
+                    }
+
+                    // === lane 수만큼 바 행을 위에서부터 그림 ===
+                    for (int li = 0; li < lanes.size(); li++) {
+                        List<Map<String,Object>> lane = lanes.get(li);
+            %>
+                <tr class="cal-bar-row">
             <%
-                } // end for week
+                        int col = 1;
+                        while (col <= 7) {
+                            int dayNum = weekStartDay + col - 1;
+
+                            // 달 범위 밖
+                            if (dayNum < 1 || dayNum > lastDay) {
+            %>
+                    <td class="empty"></td>
+            <%
+                                col++;
+                                continue;
+                            }
+
+                            Map<String,Object> cur = null;
+                            int barStartDay = 0;
+                            int barEndDay   = 0;
+
+                            // 이 dayNum 에서 시작하는 과제 찾기
+                            for (Map<String,Object> a : lane) {
+                                int sDay = (Integer)a.get("START_DAY");
+                                int eDay = (Integer)a.get("END_DAY");
+                                int bs = Math.max(sDay, weekStartDay);
+                                int be = Math.min(eDay, weekEndDay);
+                                if (dayNum == bs) {
+                                    cur = a;
+                                    barStartDay = bs;
+                                    barEndDay   = be;
+                                    break;
+                                }
+                            }
+
+                            if (cur == null) {
+            %>
+                    <td class="empty"></td>
+            <%
+                                col++;
+                            } else {
+                                int barEndCol = barEndDay - weekStartDay + 1;
+                                int span = barEndCol - col + 1;
+
+                                String atitle = (String)cur.get("TITLE");
+                                String course = (String)cur.get("COURSE_NAME");
+                                int prio      = (Integer)cur.get("PRIORITY");
+                                String prioClass = (prio == 2 ? "priority-2" : (prio == 1 ? "priority-1" : ""));
+                                String prioText  = (prio == 2 ? "매우 중요" : (prio == 1 ? "중요" : "보통"));
+
+                                int isPassedVal = (Integer)cur.get("IS_PASSED");
+                                boolean isPassed = (isPassedVal == 1);
+
+                                String link = (String)cur.get("LINK");
+                                boolean hasLink = (link != null && link.trim().length() > 0);
+
+                                String startLabel = year + "-" +
+                                    (month < 10 ? "0" + month : String.valueOf(month)) + "-" +
+                                    (barStartDay < 10 ? "0" + barStartDay : String.valueOf(barStartDay));
+                                String endLabel   = year + "-" +
+                                    (month < 10 ? "0" + month : String.valueOf(month)) + "-" +
+                                    (barEndDay < 10 ? "0" + barEndDay : String.valueOf(barEndDay));
+
+                                String passClass = isPassed ? " passed" : "";
+            %>
+                    <td colspan="<%= span %>">
+                        <% if (hasLink) { %>
+                            <a href="<%= link %>" target="_blank" rel="noopener noreferrer"
+                               class="assign-bar <%= prioClass %><%= passClass %>"
+                               data-title="<%= atitle %>"
+                               data-course="<%= (course != null ? course : "") %>"
+                               data-range="<%= startLabel %> ~ <%= endLabel %>"
+                               data-priority="<%= prioText %>">
+                                <%= (course != null ? "[" + course + "] " : "") %><%= atitle %>
+                            </a>
+                        <% } else { %>
+                            <div class="assign-bar <%= prioClass %><%= passClass %>"
+                                 data-title="<%= atitle %>"
+                                 data-course="<%= (course != null ? course : "") %>"
+                                 data-range="<%= startLabel %> ~ <%= endLabel %>"
+                                 data-priority="<%= prioText %>">
+                                <%= (course != null ? "[" + course + "] " : "") %><%= atitle %>
+                            </div>
+                        <% } %>
+                    </td>
+            <%
+                                col += span;
+                            }
+                        } // while col
+            %>
+                </tr>
+            <%
+                    } // for lane
+                } // for week
             %>
             </tbody>
         </table>
@@ -483,15 +651,15 @@
                 e캠퍼스에서 자동으로 불러오기 전, 과제를 직접 등록 테스트.
             </div>
             
-			<form action="ecampusSync.jsp" method="post" style="margin-top:8px; text-align:right;">
-			    <button type="submit" style="
-			        border-radius:999px; border:none;
-			        padding:5px 10px; font-size:11px;
-			        background:#111827; color:#e5e7eb; cursor:pointer;">
-			        e캠퍼스 과제 동기화
-			    </button>
-			</form>
-						
+            <form action="ecampusSync.jsp" method="post" style="margin-top:8px; text-align:right;">
+                <button type="submit" style="
+                    border-radius:999px; border:none;
+                    padding:5px 10px; font-size:11px;
+                    background:#111827; color:#e5e7eb; cursor:pointer;">
+                    e캠퍼스 과제 동기화
+                </button>
+            </form>
+                        
             <form class="assign-form" action="assignmentProc.jsp" method="post">
                 <input type="hidden" name="year" value="<%= year %>">
                 <input type="hidden" name="month" value="<%= month %>">
@@ -537,11 +705,13 @@
                 Connection conn2 = null;
                 PreparedStatement pstmt2 = null;
                 ResultSet rs2 = null;
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd"); // 날짜 라벨 포맷
 
                 try {
                     conn2 = DBUtil.getConnection();
                     String urgentSql =
-                        "SELECT ASSIGN_NO, TITLE, COURSE_NAME, DUE_DATE, PRIORITY, STATUS " +
+                        "SELECT ASSIGN_NO, TITLE, COURSE_NAME, DUE_DATE, PRIORITY, STATUS, " +
+                        "       IS_PASSED, LINK " +
                         "FROM ASSIGNMENT " +
                         "WHERE USER_ID = ? " +
                         "  AND (STATUS IS NULL OR STATUS <> 'DONE') " +
@@ -556,19 +726,47 @@
                         hasUrgent = true;
                         String utitle = rs2.getString("TITLE");
                         String ucourse = rs2.getString("COURSE_NAME");
-                        java.sql.Date udue = rs2.getDate("DUE_DATE");
-                        int uprio = rs2.getInt("PRIORITY");
 
+                        // 링크, 통과 여부
+                        String link = rs2.getString("LINK");
+                        boolean isPassed = (rs2.getInt("IS_PASSED") == 1);
+
+                        // 오전 1시 이전이면 전날 날짜로 표시
+                        Timestamp udueTs = rs2.getTimestamp("DUE_DATE");
+                        String udueLabel = "";
+                        if (udueTs != null) {
+                            Calendar dueCal = Calendar.getInstance();
+                            dueCal.setTimeInMillis(udueTs.getTime());
+                            if (dueCal.get(Calendar.HOUR_OF_DAY) < 1) {
+                                dueCal.add(Calendar.DAY_OF_MONTH, -1);
+                            }
+                            udueLabel = sdf.format(dueCal.getTime());
+                        }
+
+                        int uprio = rs2.getInt("PRIORITY");
                         String prioText = (uprio == 2 ? "매우 중요" : (uprio == 1 ? "중요" : "보통"));
+
+                        boolean hasLink = (link != null && link.trim().length() > 0);
             %>
-                <div class="urgent-item">
-                    <div class="urgent-item-header">
-                        <div class="urgent-title"><%= utitle %></div>
-                        <div class="urgent-meta"><%= udue %></div>
-                    </div>
-                    <div class="urgent-meta">
-                        <%= (ucourse != null ? ucourse + " · " : "") %>중요도: <%= prioText %>
-                    </div>
+                <div class="urgent-item <%= hasLink ? "clickable" : "" %>">
+                <% if (hasLink) { %>
+                    <a class="urgent-link" href="<%= link %>" target="_blank" rel="noopener noreferrer">
+                <% } %>
+                        <div class="urgent-item-header">
+                            <div class="urgent-title">
+                                <%= utitle %>
+                                <% if (isPassed) { %>
+                                    <span class="pass-label">PASS</span>
+                                <% } %>
+                            </div>
+                            <div class="urgent-meta"><%= udueLabel %></div>
+                        </div>
+                        <div class="urgent-meta">
+                            <%= (ucourse != null ? ucourse + " · " : "") %>중요도: <%= prioText %>
+                        </div>
+                <% if (hasLink) { %>
+                    </a>
+                <% } %>
                 </div>
             <%
                     }
@@ -596,5 +794,53 @@
         </div>
     </section>
 </main>
+
+<!-- 과제 툴팁 -->
+<div id="assign-tooltip" class="assign-tooltip">
+    <div class="tt-title"></div>
+    <div class="tt-course"></div>
+    <div class="tt-range"></div>
+    <div class="tt-priority"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var tooltip = document.getElementById('assign-tooltip');
+    if (!tooltip) return;
+
+    function hideTooltip() {
+        tooltip.style.display = 'none';
+    }
+
+    function showTooltip(e, bar) {
+        var title = bar.getAttribute('data-title') || '';
+        var course = bar.getAttribute('data-course') || '';
+        var range = bar.getAttribute('data-range') || '';
+        var prio = bar.getAttribute('data-priority') || '';
+
+        tooltip.querySelector('.tt-title').textContent = title;
+        tooltip.querySelector('.tt-course').textContent = course ? course : '';
+        tooltip.querySelector('.tt-range').textContent = range ? ('기간: ' + range) : '';
+        tooltip.querySelector('.tt-priority').textContent = prio ? ('중요도: ' + prio) : '';
+
+        tooltip.style.display = 'block';
+
+        var x = e.clientX + 12;
+        var y = e.clientY + 12;   // ← 여기 y좌표 수정
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
+    }
+
+    document.querySelectorAll('.assign-bar').forEach(function (bar) {
+        bar.addEventListener('mousemove', function (e) {
+            showTooltip(e, bar);
+        });
+        bar.addEventListener('mouseleave', function () {
+            hideTooltip();
+        });
+    });
+});
+</script>
+
 </body>
 </html>

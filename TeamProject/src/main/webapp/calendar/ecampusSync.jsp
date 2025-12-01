@@ -55,18 +55,19 @@
 
         List<EcampusCrawler.EcampusAssignment> list = crawler.fetchUpcomingAssignments();
         int insertCount = 0;
-
-        // 3) ASSIGNMENT 테이블과 중복 체크 후 신규 과제만 INSERT
+		int updateCount = 0;
         for (EcampusCrawler.EcampusAssignment a : list) {
             if (a.title == null || a.title.trim().isEmpty() || a.dueDate == null) continue;
+            boolean passed = a.isPassed;
 
             // 중복 기준: USER_ID + TITLE + DUE_DATE
             String chkSql =
-                "SELECT COUNT(*) " +
+                "SELECT COUNT(*), IS_PASSED " +
                 "FROM ASSIGNMENT " +
                 "WHERE USER_ID = ? " +
                 "  AND TITLE   = ? " +
-                "  AND DUE_DATE = ?";
+                "  AND DUE_DATE = ?" +
+                "  GROUP BY IS_PASSED";
             pstmt = conn.prepareStatement(chkSql);
             pstmt.setString(1, userId);
             pstmt.setString(2, a.title.trim());
@@ -75,27 +76,48 @@
 
             boolean exists = false;
             if (rs.next() && rs.getInt(1) > 0) exists = true;
-
+            
+            if (exists) {
+            	if (rs.next() && rs.getInt(1) != (passed ? 1 : 0)) {
+	                // ===== 이미 등록된 과제면 IS_PASSED만 다시 업데이트 =====
+	                updateCount++;
+	                String updSql =
+	                    "UPDATE ASSIGNMENT " +
+	                    "SET IS_PASSED = ? " +
+	                    "WHERE USER_ID = ? " +
+	                    "  AND TITLE   = ? " +
+	                    "  AND DUE_DATE = ?";
+	                pstmt = conn.prepareStatement(updSql);
+	                pstmt.setInt(1, passed ? 1 : 0);
+	                pstmt.setString(2, userId);
+	                pstmt.setString(3, a.title.trim());
+	                pstmt.setDate(4, new java.sql.Date(a.dueDate.getTime()));
+	                pstmt.executeUpdate();
+	                pstmt.close();
+            	}
+            	continue;   // INSERT는 하지 않음
+            }
             rs.close();
             pstmt.close();
 
-            if (exists) continue;
-
+            // ===== 신규 과제 INSERT =====
             String insSql =
                 "INSERT INTO ASSIGNMENT " +
-                "(ASSIGN_NO, USER_ID, TITLE, COURSE_NAME, START_DATE, DUE_DATE, PRIORITY, STATUS, CREATED_AT) " +
-                "VALUES (ASSIGNMENT_SEQ.NEXTVAL, ?, ?, ?, NULL, ?, 1, 'TODO', SYSDATE)";
+                "(ASSIGN_NO, USER_ID, TITLE, COURSE_NAME, START_DATE, DUE_DATE, PRIORITY, STATUS, CREATED_AT, IS_PASSED, LINK) " +
+                "VALUES (ASSIGNMENT_SEQ.NEXTVAL, ?, ?, ?, NULL, ?, 1, 'TODO', SYSDATE, ?, ?)";
             pstmt = conn.prepareStatement(insSql);
             pstmt.setString(1, userId);
             pstmt.setString(2, a.title.trim());
             pstmt.setString(3, a.course);  // 크롤러에서 과목명 파싱해오면 세팅, 아니면 null
             pstmt.setDate(4, new java.sql.Date(a.dueDate.getTime()));
+            pstmt.setInt(5, passed ? 1 : 0);   // updatePassed 결과 사용
+            pstmt.setString(6, a.link);
 
             insertCount += pstmt.executeUpdate();
             pstmt.close();
         }
 
-        out.println("<script>alert('e캠퍼스에서 과제 " + insertCount + "건을 동기화했습니다.');"
+        out.println("<script>alert('e캠퍼스에서 과제 " + insertCount + "건을 동기화했습니다.\\ne캠퍼스에서 과제 완료여부 " + updateCount + "건을 동기화했습니다');"
                   + "location.href='calendarMain.jsp';</script>");
 
     } catch (Exception e) {

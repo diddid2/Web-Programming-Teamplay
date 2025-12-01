@@ -444,7 +444,7 @@
 
         <div class="map-notice">
             · 최초 접속 시 유비칸 계정으로 한 번 로그인해야 지도가 표시됩니다.
-        </div>
+        </div> 
     </section>
     <!-- 카카오 지도 -->
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f1ec7760d278bac11590865e12b2469d&libraries=clusterer"></script>

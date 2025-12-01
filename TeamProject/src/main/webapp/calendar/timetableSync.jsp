@@ -82,7 +82,7 @@
         e.printStackTrace();
         out.println("<script>alert('시간표 저장 중 오류 발생.'); history.back();</script>");
         return;
-    }
+    } 
 
     // 5) 완료 메시지 후 메인으로 이동
     out.println("<script>alert('시간표 동기화 완료! (" + insertCount + "개)'); location.href='../timetable/timetableMain.jsp';</script>");

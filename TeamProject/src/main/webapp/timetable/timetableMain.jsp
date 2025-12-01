@@ -14,7 +14,7 @@
     }
  
     int[] times = {540,600,660,720,780,840,900,960,1020};
-    boolean[][] drawn = new boolean[times.length][5];
+    boolean[][] drawn = new boolean[times.length][5]; 
 
     List<Lecture> lectures = new ArrayList<>();
 

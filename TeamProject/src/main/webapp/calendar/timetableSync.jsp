@@ -30,7 +30,7 @@
             }
         }
     }
-
+ 
     if (ecId == null || ecPw == null || ecId.trim().isEmpty() || ecPw.trim().isEmpty()) {
         out.println("<script>alert('설정에서 e캠퍼스 계정을 먼저 등록해주세요.'); history.back();</script>");
         return;

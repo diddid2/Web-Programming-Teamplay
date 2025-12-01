@@ -200,16 +200,90 @@
             우선은 map 페이지를 그대로 iframe으로 띄우는 버전으로 구현.
             (브라우저에서 한 번 로그인하면 세션 유지됨)
         -->
-        <iframe class="map-frame"
-                src="https://new.ubikhan.co.kr/map"
-                title="달구지 실시간 위치"
-                loading="lazy">
-        </iframe>
+        <div id="dalgujiMap" class="map-frame"></div>
 
         <div class="map-notice">
             · 최초 접속 시 유비칸 계정으로 한 번 로그인해야 지도가 표시됩니다.
         </div>
     </section>
+    <!-- 카카오 지도 -->
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f1ec7760d278bac11590865e12b2469d&libraries=clusterer"></script>
+
+<script>
+let map;
+let markers = {};
+
+function initMap() {
+    const container = document.getElementById('dalgujiMap');
+
+    const options = {
+        center: new kakao.maps.LatLng(37.274, 127.125),
+        level: 5
+    };
+
+    map = new kakao.maps.Map(container, options);
+}
+
+function updateShuttle() {
+    fetch("<%= ctx %>/shuttle")
+        .then(r => r.json())
+        .then(data => {
+            if (!data.list) return;
+
+            data.list.forEach(car => {
+                const lat    = car.lat;
+                const lon    = car.lon;
+                const name   = car.licenseid;
+                const speed  = car.carspeed;
+                const report = car.repotime;
+                const icon   = car.cariconurl;
+
+                if (markers[name]) {
+                    // 기존 마커 위치만 이동
+                    markers[name].setPosition(new kakao.maps.LatLng(lat, lon));
+                    return;
+                }
+
+                // 새 마커 생성
+                let img = new kakao.maps.MarkerImage(
+                    "https://new.ubikhan.com/resources/marker/" + icon,
+                    new kakao.maps.Size(40, 40)
+                );
+
+                let marker = new kakao.maps.Marker({
+                    map: map,
+                    position: new kakao.maps.LatLng(lat, lon),
+                    image: img
+                });
+
+                markers[name] = marker;
+
+                let info = new kakao.maps.InfoWindow({
+                    content: `
+                        <div style="padding:8px;font-size:13px;">
+                            <b>${name}</b><br>
+                            속도 : ${speed} km/h<br>
+                            보고시각 : ${report}
+                        </div>
+                    `
+                });
+
+                kakao.maps.event.addListener(marker, "click", () => {
+                    info.open(map, marker);
+                });
+            });
+        })
+        .catch(err => console.error("shuttle update error:", err));
+}
+
+
+window.addEventListener("DOMContentLoaded", () => {
+    initMap();
+    updateShuttle();               // 최초 1회
+    setInterval(updateShuttle, 3000); // 3초마다 업데이트
+});
+</script>
+    
 </main>
 
 </body>

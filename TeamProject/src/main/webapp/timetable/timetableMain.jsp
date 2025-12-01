@@ -1,23 +1,45 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+<%@ page import="util.DBUtil" %>
 <%@ page import="java.util.*" %>
+<%@ page import="crawler.TimetableCrawler.Lecture" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%
-    /* ===============================
-       1) 시간표 기본 설정
-       =============================== */
-    int[] times = {540,600,660,720,780,840,900,960,1020}; 
-    boolean[][] drawn = new boolean[times.length][5];  // 월~금
+    request.setCharacterEncoding("UTF-8");
 
-    /* ===============================
-       2) 강의 데이터 받기
-       (List<Map<String,Object>> 구조)
-       예: title, day(0~4), start, end, location
-       =============================== */
-    List<Map<String,Object>> lectures =
-        (List<Map<String,Object>>)request.getAttribute("lectures");
+    String userId = (String)session.getAttribute("userId");
+    if (userId == null) {
+        out.println("<script>alert('로그인이 필요합니다.'); location.href='../login.jsp';</script>");
+        return;
+    }
 
-    if (lectures == null) {
-        lectures = new ArrayList<>();
+    int[] times = {540,600,660,720,780,840,900,960,1020};
+    boolean[][] drawn = new boolean[times.length][5];
+
+    List<Lecture> lectures = new ArrayList<>();
+
+    // --- DB에서 시간표 불러오기 ---
+    try (Connection conn = DBUtil.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(
+             "SELECT TITLE, PROFESSOR, DAY, START_MIN, END_MIN " +
+             "FROM USER_TIMETABLE WHERE USER_ID = ? ORDER BY DAY, START_MIN")) {
+
+        pstmt.setString(1, userId);
+
+        try (ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                Lecture L = new Lecture();
+                L.title = rs.getString("TITLE");
+                L.professor = rs.getString("PROFESSOR");
+                L.day = rs.getInt("DAY");
+                L.start = rs.getInt("START_MIN");
+                L.end = rs.getInt("END_MIN");
+                lectures.add(L);
+            }
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
     }
 %>
 
@@ -29,6 +51,7 @@
 
 <style>
 /* 전체 다크 테마 */
+
 body {
     margin: 0;
     background: #0B1120;
@@ -37,9 +60,9 @@ body {
 }
 
 .timetable-panel {
-    margin: 30px auto;
-    max-width: 1050px;
-    padding: 28px;
+    margin: 20px auto;
+    max-width: 900px;          /* 전체 너비 더 컴팩트하게 줄임 */
+    padding: 24px;
     border-radius: 18px;
     background: #111827;
     border: 1px solid #273244;
@@ -54,73 +77,102 @@ body {
 
 .title-row h2 {
     margin: 0;
-    font-size: 23px;
+    font-size: 21px;
     color: #E2E8F0;
 }
 
 .btn {
-    padding: 8px 18px;
+    padding: 7px 16px;
     border-radius: 999px;
     background: #1E293B;
     border: 1px solid #2B3547;
     color: #E9EEF7;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
 }
 .btn:hover { background: #273445; }
-
-.back-btn {
-    background: #1E293B;
-    border: 1px solid #2B3547;
-    color: #E9EEF7;
-    margin-bottom: 15px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    cursor: pointer;
-}
-.back-btn:hover { background: #273445; }
 
 .info-text {
     color: #7A8AAA;
     margin-top: 5px;
-    font-size: 12px;
+    font-size: 11px;
 }
 
+/* 테이블 전체 고정 레이아웃 – 열 너비가 안정됨 */
 .timetable-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    table-layout: fixed;   /* 💥 중요 */
 }
+
+/* 시간 칸(제일 왼쪽)은 70px 고정 */
+.timetable-table th:first-child,
+.timetable-table td:first-child {
+    width: 70px !important;
+}
+
+/* 요일 칸 5개는 동일한 비율로 분배 */
+.timetable-table th:not(:first-child),
+.timetable-table td:not(:first-child) {
+    width: calc((100% - 70px) / 5) !important;
+}
+
 
 .timetable-table th {
     background: #111827;
     color: #9CA3AF;
-    padding: 10px;
+    padding: 8px;
     border: 1px solid #273244;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .timetable-table td {
     border: 1px solid #1F2533;
-    height: 68px;
+    height: 80px;               /* 칸 높이 줄임 */
+    padding: 0;
     position: relative;
     background: transparent;
+    overflow: visible;          /* 박스 잘림 방지 */
 }
 
+/* 강의 박스 — 테이블 구조를 망가뜨리지 않는 방식 */
 .subject-box {
-    display: inline-block;
-    padding: 4px 7px;
-    border-radius: 10px;
+    position: absolute;
+    top: 6%;               /* 박스를 위쪽으로 */
+    left: 6%;              /* 박스를 왼쪽으로 */
+    width: 88%;            /* 전체 셀보다 조금 작게 */
+    height: 88%;           /* 세로도 여유 있게 축소 */
+
+    padding: 10px 12px;
+
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.18);
+    border-radius: 14px;
+    box-sizing: border-box;
+
     font-size: 12px;
+    line-height: 1.4;
     color: #EDEDED;
-    background: rgba(0,0,0,0.0);
-    border: 1px solid #D9D16F;
-    white-space: nowrap;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;   /* 내용 위쪽 정렬 */
 }
-.sub-loc {
-    font-size: 10px;
-    opacity: 0.85;
+
+
+.subject-box:hover {
+    border-color: rgba(58, 129, 255, 0.8);
+    background: rgba(58, 129, 255, 0.15);
 }
+
+
+.sub-prof {
+    font-size: 9.5px;
+    color: #9DA9BC;
+    margin-bottom: 2px;
+}
+
 </style>
 </head>
 
@@ -130,11 +182,10 @@ body {
 
 <div class="timetable-panel">
 
-    <button class="back-btn" onclick="location.href='calendarMain.jsp'">← 캘린더로 돌아가기</button>
-
     <div class="title-row">
         <h2>시간표</h2>
-        <button class="btn" onclick="location.href='ecampusSync.jsp'">
+
+        <button class="btn" onclick="location.href='../calendar/timetableSync.jsp'">
             🔄 강남대 시간표 연동
         </button>
     </div>
@@ -143,14 +194,14 @@ body {
 
     <table class="timetable-table">
         <thead>
-            <tr>
-                <th>시간</th>
-                <th>월</th>
-                <th>화</th>
-                <th>수</th>
-                <th>목</th>
-                <th>금</th>
-            </tr>
+        <tr>
+            <th>시간</th>
+            <th>월</th>
+            <th>화</th>
+            <th>수</th>
+            <th>목</th>
+            <th>금</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -163,14 +214,13 @@ body {
                     <% if (drawn[i][day]) continue; %>
 
                     <%
-                        Map<String,Object> target = null;
+                        Lecture target = null;
 
-                        for (Map<String,Object> L : lectures) {
-                            int d = (int)L.get("day");
-                            int st = (int)L.get("start");
-                            int en = (int)L.get("end");
-                            if (d == day && st <= times[i] && en > times[i])
+                        for (Lecture L : lectures) {
+                            if (L.day == day && L.start <= times[i] && L.end > times[i]) {
                                 target = L;
+                                break;
+                            }
                         }
 
                         if (target == null) {
@@ -178,7 +228,7 @@ body {
                         <td></td>
 
                     <% } else {
-                        int duration = (int)target.get("end") - (int)target.get("start");
+                        int duration = target.end - target.start;
                         int rowspan = (int)Math.ceil(duration / 60.0);
 
                         for (int k=0; k<rowspan && i+k<times.length; k++)
@@ -186,14 +236,19 @@ body {
                     %>
 
                         <td rowspan="<%= rowspan %>">
-                            <div class="subject-box">
-                                <%= target.get("title") %><br>
-                                <span style="font-size:11px;">
-                                    <%= String.format("%02d:%02d ~ %02d:%02d",
-                                        ((int)target.get("start"))/60, ((int)target.get("start"))%60,
-                                        ((int)target.get("end"))/60, ((int)target.get("end"))%60 ) %>
-                                </span><br>
-                                <span class="sub-loc"><%= target.get("location") %></span>
+                           
+                                <div class="subject-box">
+								    <div class="lecture-title"><%= target.title %></div>
+								
+								    <div class="lecture-time">
+								        <%= String.format("%02d:%02d ~ %02d:%02d",
+								            target.start/60, target.start%60,
+								            target.end/60, target.end%60) %>
+								    </div>
+								
+								    <div class="lecture-prof sub-prof"><%= target.professor %></div>
+								</div>
+
                             </div>
                         </td>
 

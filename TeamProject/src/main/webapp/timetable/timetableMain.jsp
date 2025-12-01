@@ -12,7 +12,7 @@
         out.println("<script>alert('로그인이 필요합니다.'); location.href='../login.jsp';</script>");
         return;
     }
-
+ 
     int[] times = {540,600,660,720,780,840,900,960,1020};
     boolean[][] drawn = new boolean[times.length][5];
 

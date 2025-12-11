@@ -1,7 +1,5 @@
 package dto;
 
-
-
 public class MarketItem {
 
     private long id;

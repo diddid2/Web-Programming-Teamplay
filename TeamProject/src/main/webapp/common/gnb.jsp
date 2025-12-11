@@ -154,6 +154,9 @@
             <a href="<%= ctx %>/dalguji/dalgujiMain.jsp"
                class="<%= "dalguji".equals(currentMenu) ? "gnb-active" : "" %>">달구지</a>
 
+			<a href="<%= ctx %>/market/marketMain.jsp"
+               class="<%= "market".equals(currentMenu) ? "gnb-active" : "" %>">강남마켓</a>
+
             <a href="<%= ctx %>/settings/settings.jsp"
                class="<%= "settings".equals(currentMenu) ? "gnb-active" : "" %>">설정</a>
         </nav>

@@ -1,24 +1,55 @@
-<%@ page contentType="text/html; charset=UTF-8" language="java" %>
-<!DOCTYPE html>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.*, dao.MarketItemDao, dto.MarketItem" %>
+
 <%
-    String userId   = (String) session.getAttribute("userId");
-    String userName = (String) session.getAttribute("userName");
-    String ctx      = request.getContextPath();
-    String currentMenu = (String) request.getAttribute("market");
+    String userId = (String) session.getAttribute("userId");
+	request.setAttribute("currentMenu", "market");
 %>
+<%
+    request.setCharacterEncoding("UTF-8");
+    String ctx = request.getContextPath();
+
+    String keyword   = request.getParameter("keyword");
+    String category  = request.getParameter("category");
+    String campus    = request.getParameter("campus");
+    String tradeType = request.getParameter("tradeType");
+    String sort      = request.getParameter("sort");
+
+    if (category == null)  category = "ALL";
+    if (campus == null)    campus = "ALL";
+    if (tradeType == null) tradeType = "ALL";
+    if (sort == null)      sort = "latest";
+
+    MarketItemDao marketDao = new MarketItemDao();
+    List<MarketItem> items = marketDao.findByFilter(
+            keyword,
+            category,
+            campus,
+            tradeType,
+            sort,
+            30
+    );
+
+    int todayCount = items.size();  // 간단히 현재 조회된 개수로 표시 (나중에 진짜 오늘 기준으로 바꿔도 됨)
+    int onSaleCount = 0;
+    for (MarketItem mi : items) {
+        if ("ON_SALE".equalsIgnoreCase(mi.getStatus())) onSaleCount++;
+    }
+%>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-
     <meta charset="UTF-8">
     <title>KangnamTime – 중고거래</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- 폰트 (원하면 프로젝트에서 쓰는 폰트로 교체) -->
+    <!-- 폰트 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <style>
+        /* 네가 준 CSS 그대로 (생략 없이 붙이기) */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -36,7 +67,6 @@
             text-decoration: none;
         }
 
-        /* 상단 네비게이션바 */
         .navbar {
             position: sticky;
             top: 0;
@@ -129,7 +159,6 @@
             filter: brightness(1.1);
         }
 
-        /* 메인 레이아웃 */
         .page-wrapper {
             max-width: 1180px;
             margin: 0 auto;
@@ -179,7 +208,6 @@
             margin-left: 4px;
         }
 
-        /* 카드 공통 스타일 */
         .card {
             background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.09), rgba(15, 23, 42, 0.98));
             border-radius: 22px;
@@ -211,7 +239,6 @@
             cursor: pointer;
         }
 
-        /* 상단 검색/필터 영역 */
         .search-card {
             margin-bottom: 20px;
         }
@@ -268,14 +295,12 @@
             filter: brightness(1.1);
         }
 
-        /* 메인/사이드 2컬럼 레이아웃 */
         .content-grid {
             display: grid;
             grid-template-columns: minmax(0, 3.1fr) minmax(0, 1.7fr);
             gap: 18px;
         }
 
-        /* 상품 리스트 카드 */
         .product-list-card {
             min-height: 260px;
         }
@@ -459,7 +484,6 @@
             cursor: pointer;
         }
 
-        /* 오른쪽 사이드 카드 */
         .side-card + .side-card {
             margin-top: 12px;
         }
@@ -556,7 +580,6 @@
             margin-top: 2px;
         }
 
-        /* 플로팅 글쓰기 버튼 */
         .floating-write-btn {
             position: fixed;
             right: 32px;
@@ -587,7 +610,6 @@
             font-size: 16px;
         }
 
-        /* 푸터 */
         .footer {
             margin-top: 40px;
             padding: 18px 0 10px;
@@ -597,7 +619,6 @@
             border-top: 1px solid rgba(148, 163, 184, 0.12);
         }
 
-        /* 반응형 */
         @media (max-width: 960px) {
             .navbar {
                 padding: 12px 16px;
@@ -621,37 +642,17 @@
 
         @media (max-width: 720px) {
             .navbar-menu {
-                display: none; /* 필요하면 모바일 메뉴 따로 구현 */
+                display: none;
             }
         }
     </style>
 </head>
 <body>
 
-<!-- NAVBAR (초기 디자인 유지) -->
-<header class="navbar">
-    <div class="navbar-left">
-        <div class="navbar-logo">KT</div>
-        <div class="navbar-title">KangnamTime</div>
-    </div>
-    <nav class="navbar-menu">
-        <a href="/">홈</a>
-        <a href="/timetable">시간표</a>
-        <a href="/board">게시판</a>
-        <a href="/review">강의평가</a>
-        <a href="/campus">캠퍼스 정보</a>
-        <a href="/market" class="active">중고거래</a>
-    </nav>
-    <div class="navbar-right">
-        <button class="btn-outline" onclick="location.href='/login'">로그인</button>
-        <button class="btn-primary" onclick="location.href='/register'">회원가입</button>
-    </div>
-</header>
+<jsp:include page="../common/gnb.jsp"/>
 
-<!-- PAGE WRAPPER -->
 <main class="page-wrapper">
 
-    <!-- 상단 타이틀 -->
     <section class="page-header">
         <div>
             <div class="page-title">
@@ -663,54 +664,57 @@
         </div>
         <div class="page-header-right">
             <div class="pill">
-                오늘 등록된 글<span>+12</span>
+                오늘 조회된 글<span>+<%=todayCount%></span>
             </div>
             <div class="pill">
-                실시간 거래 중<span>5건</span>
+                판매중 상품<span><%=onSaleCount%>건</span>
             </div>
         </div>
     </section>
 
-    <!-- 검색 / 필터 카드 (디자인만, 실제 검색은 나중에 서블릿에서 처리 가능) -->
+    <!-- 검색 / 필터 카드 -->
     <section class="card search-card">
         <div class="card-header">
             <div>
                 <div class="card-title">상품 검색</div>
                 <div class="card-subtitle">키워드, 카테고리, 캠퍼스를 선택해서 원하는 상품을 찾아보세요.</div>
             </div>
-            <div class="card-link">고급 필터 · 내 거래만 보기</div>
+            <div class="card-link">고급 필터 · 내 거래만 보기 (추후)</div>
         </div>
 
-        <div class="search-row">
+        <form class="search-row" method="get" action="<%=ctx%>/market/marketMain.jsp">
             <div class="search-input">
                 <span>🔍</span>
-                <input type="text" placeholder="예) 운영체제 교재, 아이패드, 자취 냉장고">
+                <input type="text" name="keyword"
+                       placeholder="예) 운영체제 교재, 아이패드, 자취 냉장고"
+                       value="<%= keyword != null ? keyword : "" %>">
             </div>
 
-            <select class="filter-select">
-                <option>전체 카테고리</option>
-                <option>교재 · 전공책</option>
-                <option>전자기기</option>
-                <option>가구 · 자취템</option>
-                <option>패션 · 잡화</option>
-                <option>기타</option>
+            <select class="filter-select" name="category">
+                <option value="ALL" <%= "ALL".equals(category) ? "selected" : "" %>>전체 카테고리</option>
+                <option value="교재 · 전공책" <%= "교재 · 전공책".equals(category) ? "selected" : "" %>>교재 · 전공책</option>
+                <option value="전자기기" <%= "전자기기".equals(category) ? "selected" : "" %>>전자기기</option>
+                <option value="자취템" <%= "자취템".equals(category) ? "selected" : "" %>>가구 · 자취템</option>
+                <option value="패션 · 잡화" <%= "패션 · 잡화".equals(category) ? "selected" : "" %>>패션 · 잡화</option>
+                <option value="기타" <%= "기타".equals(category) ? "selected" : "" %>>기타</option>
             </select>
 
-            <select class="filter-select">
-                <option>전체 캠퍼스</option>
-                <option>강남대 정문</option>
-                <option>기숙사</option>
-                <option>역 인근</option>
+            <select class="filter-select" name="campus">
+                <option value="ALL" <%= "ALL".equals(campus) ? "selected" : "" %>>전체 캠퍼스</option>
+                <option value="강남대 정문" <%= "강남대 정문".equals(campus) ? "selected" : "" %>>강남대 정문</option>
+                <option value="기숙사" <%= "기숙사".equals(campus) ? "selected" : "" %>>기숙사</option>
+                <option value="역 인근" <%= "역 인근".equals(campus) ? "selected" : "" %>>역 인근</option>
             </select>
 
-            <select class="filter-select">
-                <option>거래 방식 전체</option>
-                <option>직거래</option>
-                <option>택배</option>
+            <select class="filter-select" name="tradeType">
+                <option value="ALL" <%= "ALL".equals(tradeType) ? "selected" : "" %>>거래 방식 전체</option>
+                <option value="DIRECT" <%= "DIRECT".equals(tradeType) ? "selected" : "" %>>직거래</option>
+                <option value="DELIVERY" <%= "DELIVERY".equals(tradeType) ? "selected" : "" %>>택배</option>
+                <option value="BOTH" <%= "BOTH".equals(tradeType) ? "selected" : "" %>>직거래+택배</option>
             </select>
 
-            <button class="search-btn">검색하기</button>
-        </div>
+            <button class="search-btn" type="submit">검색하기</button>
+        </form>
     </section>
 
     <!-- 메인 컨텐츠 그리드 -->
@@ -723,131 +727,113 @@
                     <div class="card-title">실시간 중고 상품</div>
                     <div class="card-subtitle">최근 등록 순으로 최대 30개까지 보여줍니다.</div>
                 </div>
-                <div class="card-link" onclick="location.href='/market'">전체 보기</div>
+                <div class="card-link" onclick="location.href='<%=ctx%>/market/marketMain.jsp'">전체 보기</div>
             </div>
 
             <div class="product-toolbar">
                 <div class="product-tabs">
-                    <button class="product-tab active">전체</button>
-                    <button class="product-tab">교재</button>
-                    <button class="product-tab">전자기기</button>
-                    <button class="product-tab">자취템</button>
-                    <button class="product-tab">패션</button>
+                    <button class="product-tab <%= "ALL".equals(category) ? "active" : "" %>"
+                            onclick="location.href='<%=ctx%>/market/marketMain.jsp'">전체</button>
+                    <button class="product-tab <%= "교재 · 전공책".equals(category) ? "active" : "" %>"
+                            onclick="location.href='<%=ctx%>/market/marketMain.jsp?category=교재 · 전공책'">교재</button>
+                    <button class="product-tab <%= "전자기기".equals(category) ? "active" : "" %>"
+                            onclick="location.href='<%=ctx%>/market/marketMain.jsp?category=전자기기'">전자기기</button>
+                    <button class="product-tab <%= "자취템".equals(category) ? "active" : "" %>"
+                            onclick="location.href='<%=ctx%>/market/marketMain.jsp?category=자취템'">자취템</button>
+                    <button class="product-tab <%= "패션 · 잡화".equals(category) ? "active" : "" %>"
+                            onclick="location.href='<%=ctx%>/market/marketMain.jsp?category=패션 · 잡화'">패션</button>
                 </div>
                 <div class="product-sort">
                     <span>정렬</span>
-                    <select>
-                        <option>최신순</option>
-                        <option>가격 낮은순</option>
-                        <option>가격 높은순</option>
-                        <option>찜 많은순</option>
-                    </select>
+                    <form method="get" action="<%=ctx%>/market/marketMain.jsp" id="sortForm">
+                        <input type="hidden" name="keyword" value="<%= keyword != null ? keyword : "" %>">
+                        <input type="hidden" name="category" value="<%= category %>">
+                        <input type="hidden" name="campus" value="<%= campus %>">
+                        <input type="hidden" name="tradeType" value="<%= tradeType %>">
+                        <select name="sort" onchange="document.getElementById('sortForm').submit()">
+                            <option value="latest" <%= "latest".equals(sort) ? "selected" : "" %>>최신순</option>
+                            <option value="price_asc" <%= "price_asc".equals(sort) ? "selected" : "" %>>가격 낮은순</option>
+                            <option value="price_desc" <%= "price_desc".equals(sort) ? "selected" : "" %>>가격 높은순</option>
+                            <option value="wish_desc" <%= "wish_desc".equals(sort) ? "selected" : "" %>>찜 많은순</option>
+                        </select>
+                    </form>
                 </div>
             </div>
 
             <div class="product-grid">
+                <%
+                    if (items == null || items.isEmpty()) {
+                %>
+                <p style="font-size:13px; color:#9ca3af;">조건에 맞는 상품이 없습니다. 검색어 또는 필터를 바꿔보세요.</p>
+                <%
+                    } else {
+                        for (MarketItem item : items) {
+                            String priceStr = String.format("%,d원", item.getPrice());
+                            String statusLabel = "판매중";
+                            String statusStyle = "background: rgba(22, 163, 74, 0.9); color:#ecfdf5;";
+                            if ("RESERVED".equalsIgnoreCase(item.getStatus())) {
+                                statusLabel = "예약중";
+                                statusStyle = "background: rgba(234, 179, 8, 0.95); color:#111827;";
+                            } else if ("SOLD_OUT".equalsIgnoreCase(item.getStatus())) {
+                                statusLabel = "거래완료";
+                                statusStyle = "background: rgba(107, 114, 128, 0.95); color:#e5e7eb;";
+                            }
 
-                <!-- DB 연동: productList를 기반으로 출력 -->
-                <c:choose>
-                    <c:when test="${empty productList}">
-                        <p style="font-size:13px; color:#9ca3af; margin-top:8px;">
-                            아직 등록된 상품이 없습니다. 첫 번째 중고상품의 주인이 되어보세요!
-                        </p>
-                    </c:when>
-                    <c:otherwise>
-                        <c:forEach var="item" items="${productList}">
-                            <article class="product-card">
-                                <div class="product-thumb">
-                                    <div class="product-tag">${item.category}</div>
-
-                                    <c:choose>
-                                        <c:when test="${item.status == 'ON_SALE'}">
-                                            <div class="product-status">판매중</div>
-                                        </c:when>
-                                        <c:when test="${item.status == 'RESERVED'}">
-                                            <div class="product-status" style="background: rgba(234, 179, 8, 0.95); color:#111827;">
-                                                예약중
-                                            </div>
-                                        </c:when>
-                                        <c:when test="${item.status == 'SOLD_OUT'}">
-                                            <div class="product-status" style="background: rgba(107, 114, 128, 0.95);">
-                                                거래완료
-                                            </div>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <div class="product-status">판매중</div>
-                                        </c:otherwise>
-                                    </c:choose>
-
-                                    <c:choose>
-                                        <c:when test="${not empty item.thumbnailUrl}">
-                                            <img src="${item.thumbnailUrl}" alt="${item.title}">
-                                        </c:when>
-                                        <c:otherwise>
-                                            이미지 영역
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
-
-                                <div class="product-info-main">
-                                    <div>
-                                        <h3 class="product-title">${item.title}</h3>
-                                        <p class="product-meta">
-                                            ${item.campus}
-                                            <c:if test="${not empty item.meetingTime}">
-                                                · ${item.meetingTime}
-                                            </c:if>
-                                        </p>
-                                    </div>
-                                    <div class="product-price">
-                                        <fmt:formatNumber value="${item.price}" type="number" />원
-                                    </div>
-                                </div>
-                                <div class="product-extra">
-                                    <span>찜 ${item.wishCount} · 채팅 ${item.chatCount}</span>
-                                    <span class="chip">
-                                        <c:choose>
-                                            <c:when test="${not empty item.meetingPlace}">
-                                                ${item.meetingPlace}
-                                            </c:when>
-                                            <c:otherwise>
-                                                직거래 / 택배
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </span>
-                                </div>
-                                <div class="product-actions">
-                                    <button class="btn-xs"
-                                            onclick="location.href='/market/detail?id=${item.id}'">
-                                        상세보기
-                                    </button>
-                                    <c:choose>
-                                        <c:when test="${item.status == 'SOLD_OUT'}">
-                                            <button class="btn-xs-primary"
-                                                    onclick="location.href='/market/review/write?id=${item.id}'">
-                                                후기 남기기
-                                            </button>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <button class="btn-xs-primary"
-                                                    onclick="location.href='/chat/start?itemId=${item.id}'">
-                                                채팅으로 거래하기
-                                            </button>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
-                            </article>
-                        </c:forEach>
-                    </c:otherwise>
-                </c:choose>
-
+                            String thumb = item.getThumbnailUrl();
+                            boolean hasImg = (thumb != null && !thumb.trim().isEmpty());
+                %>
+                <article class="product-card" onclick="location.href='<%=ctx%>/market/marketView.jsp?id=<%=item.getId()%>'">
+                    <div class="product-thumb">
+                        <div class="product-tag"><%=item.getCategory()%></div>
+                        <div class="product-status" style="<%=statusStyle%>"><%=statusLabel%></div>
+                        <% if (hasImg) {%>
+                            <img src="<%=item.getThumbnailUrl()%>" alt="상품 이미지">
+                        <% } else { %>
+                            이미지 없음
+                        <% } %>
+                    </div>
+                    <div class="product-info-main">
+                        <div>
+                            <h3 class="product-title"><%=item.getTitle()%></h3>
+                            <p class="product-meta">
+                                <%=item.getCampus()%>
+                                <% if (item.getMeetingTime() != null && !item.getMeetingTime().trim().isEmpty()) { %>
+                                    · <%=item.getMeetingTime()%>
+                                <% } %>
+                            </p>
+                        </div>
+                        <div class="product-price"><%=priceStr%></div>
+                    </div>
+                    <div class="product-extra">
+                        <span>찜 <%=item.getWishCount()%> · 채팅 <%=item.getChatCount()%></span>
+                        <% if (item.getMeetingPlace() != null && !item.getMeetingPlace().trim().isEmpty()) { %>
+                            <span class="chip"><%=item.getMeetingPlace()%></span>
+                        <% } else { %>
+                            <span class="chip">
+                            <%
+                                if ("DIRECT".equalsIgnoreCase(item.getTradeType())) out.print("직거래");
+                                else if ("DELIVERY".equalsIgnoreCase(item.getTradeType())) out.print("택배");
+                                else out.print("직거래+택배");
+                            %>
+                            </span>
+                        <% } %>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn-xs" type="button"
+                                onclick="event.stopPropagation();location.href='<%=ctx%>/market/marketView.jsp?id=<%=item.getId()%>'">상세보기</button>
+                        <button class="btn-xs-primary" type="button"
+                                onclick="event.stopPropagation();alert('채팅 기능은 추후 추가 예정입니다.');">채팅으로 거래하기</button>
+                    </div>
+                </article>
+                <%
+                        }
+                    }
+                %>
             </div>
         </section>
 
-        <!-- 오른쪽 사이드 영역 (초기 디자인 그대로) -->
+        <!-- 오른쪽 사이드 영역 -->
         <aside>
-
-            <!-- 나의 거래 현황 -->
             <section class="card side-card">
                 <div class="card-header">
                     <div>
@@ -881,65 +867,16 @@
                 </div>
             </section>
 
-            <!-- 인기 키워드 -->
-            <section class="card side-card">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">실시간 인기 키워드</div>
-                        <div class="card-subtitle">최근 24시간 기준 검색량이 많은 키워드입니다.</div>
-                    </div>
-                    <div class="card-link">전체 랭킹</div>
-                </div>
-                <div class="keyword-list">
-                    <button class="keyword hot">아이패드</button>
-                    <button class="keyword hot">운영체제 교재</button>
-                    <button class="keyword">기숙사 의자</button>
-                    <button class="keyword">노트북 거치대</button>
-                    <button class="keyword">공학용 계산기</button>
-                    <button class="keyword">전자 면도기</button>
-                </div>
-            </section>
 
-            <!-- 빠른 카테고리 -->
-            <section class="card side-card">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">빠른 카테고리</div>
-                        <div class="card-subtitle">자주 거래되는 카테고리만 모아봤어요.</div>
-                    </div>
-                </div>
-                <div class="quick-category">
-                    <button>
-                        교재 · 전공책
-                        <span>교양부터 전공까지</span>
-                    </button>
-                    <button>
-                        전자기기
-                        <span>노트북, 태블릿, 주변기기</span>
-                    </button>
-                    <button>
-                        자취템
-                        <span>가구, 주방, 생활용품</span>
-                    </button>
-                    <button>
-                        패션 · 잡화
-                        <span>후드, 패딩, 가방</span>
-                    </button>
-                </div>
-            </section>
-
-        </aside>
     </section>
 
-    <!-- 푸터 -->
     <footer class="footer">
         © 2025 KangnamTime. JSP Web Programming Team Project. All rights reserved.
     </footer>
 
 </main>
 
-<!-- 글쓰기 플로팅 버튼 -->
-<button class="floating-write-btn" onclick="location.href='<%= ctx %>/market/write.jsp'">
+<button class="floating-write-btn" onclick="location.href='<%=ctx%>/market/marketWrite.jsp'">
     <span class="icon">✏️</span>
     중고상품 글쓰기
 </button>

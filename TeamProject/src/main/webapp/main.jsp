@@ -375,7 +375,21 @@
                     <span>보안 저장</span>
                 </div>
             </a>
-
+            
+			<a href="market/market.jsp" class="menu-card">
+                <div>
+                    <div class="menu-tag">KANGNAM MARKET</div>
+                    <div class="menu-title">강남 마켓</div>
+                    <div class="menu-desc">
+                        강남대 학생 전용 중고 거래 마켓입니다.
+                        교재·전자기기·생활용품 등을 안전하게 사고팔아 보세요.
+                    </div>
+                </div>
+                <div class="menu-footer">
+                    <span class="pill">상품 보기</span>
+                    <span>판매글</span>
+                </div>
+            </a>
         </div>
     </section>
 </main>

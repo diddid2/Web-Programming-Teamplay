@@ -10,8 +10,8 @@
     String userId = (String)session.getAttribute("userId");
     if (userId == null) {
         out.println("<script>alert('로그인이 필요합니다.'); location.href='../login.jsp';</script>");
-        return;
-    }
+        return; 
+    } 
 
     // 2) DB에서 e캠퍼스 계정 로드
     String ecId = null;
@@ -51,7 +51,7 @@
     // 4) USER_TIMETABLE 에 저장
     int insertCount = 0;
 
-    try (Connection conn = DBUtil.getConnection()) {
+    try (Connection conn = DBUtil.getConnection()) { 
 
         // (1) 기존 데이터 전체 삭제
         try (PreparedStatement del = conn.prepareStatement(

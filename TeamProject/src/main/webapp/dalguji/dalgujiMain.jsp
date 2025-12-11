@@ -465,7 +465,7 @@ function initMap() {
 }
 
 function updateShuttle() {
-    fetch("<%= ctx %>/shuttle")
+    fetch("http://localhost:3001/shuttle")
         .then(r => r.json())
         .then(data => {
             if (!data.list) return;
@@ -520,7 +520,7 @@ function updateShuttle() {
 window.addEventListener("DOMContentLoaded", () => {
     initMap();
     updateShuttle();               // 최초 1회
-    setInterval(updateShuttle, 3000); // 3초마다 업데이트
+    setInterval(updateShuttle, 3000); // 3초마다 업데이트V
 });
 </script>
     

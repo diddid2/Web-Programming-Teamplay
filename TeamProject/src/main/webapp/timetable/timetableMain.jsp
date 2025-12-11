@@ -6,7 +6,7 @@
 
 <%
     request.setCharacterEncoding("UTF-8");
-
+/**/
     String userId = (String)session.getAttribute("userId");
     if (userId == null) {
         out.println("<script>alert('로그인이 필요합니다.'); location.href='../login.jsp';</script>");

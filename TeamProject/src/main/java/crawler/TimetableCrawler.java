@@ -117,7 +117,7 @@ public class TimetableCrawler {
             // inside 예: "수 09:00-12:40"
             // inside 예: "목"
             // inside 예: "온라인"
-            // inside 예: ""
+            // inside 예: ""DD
             if (inside.equals("") || inside.contains("온라인"))
                 continue; // 시간 없는 경우 skip
 

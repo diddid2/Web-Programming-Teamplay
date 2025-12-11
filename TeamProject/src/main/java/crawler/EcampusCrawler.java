@@ -6,6 +6,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +20,6 @@ public class EcampusCrawler {
 
     private static final String LOGIN_URL     = "https://ecampus.kangnam.ac.kr/login.php";
     private static final String UPCOMING_URL = "https://ecampus.kangnam.ac.kr/"; 
-    // ↑ 이건 예시. 실제 과제/해야할일 페이지 URL은 F12로 보고 맞게 교체해야 함.
 
     private final CookieManager cookieManager;
 
@@ -28,6 +28,7 @@ public class EcampusCrawler {
         public String course;
         public Date   dueDate;
         public String link;
+        public boolean isPassed;
     }
 
     public EcampusCrawler() {
@@ -117,20 +118,26 @@ public class EcampusCrawler {
                         .get();
         		Elements main_elements = assign_page.select("#region-main");
         		String title = main_elements.select("h2").text();
-        		boolean catch_ = false;
-        		String date_value = null;
-        		for (Element el : main_elements.select("td")) {
-        			if (catch_) { date_value = el.text(); break;}
-        			if (el.text().equals("종료 일시")) {
-        				catch_ = true;
-        			}
+        		HashMap<String, String> datas = new HashMap<String, String>();
+        		Elements target_table = main_elements.select("td");
+        		for (int i = 0; i < target_table.size(); i += 2) {
+        			datas.put(target_table.get(i).text(), target_table.get(i+1).text());
         		}
         		
+        		
         		String formatPattern = "yyyy-MM-dd HH:mm";
+        		
         		Date date = null;
+        		String dueText = datas.get("종료 일시");
+        		
+        		if (dueText == null || dueText.trim().isEmpty()) {
+        		    System.out.println("[SKIP] 종료 일시 없음 → " + title);
+        		    continue;   // 이 과제는 패스
+        		}
+        		
                 try {
                     SimpleDateFormat formatter = new SimpleDateFormat(formatPattern);
-                    date = formatter.parse(date_value);
+                    date = formatter.parse(datas.get("종료 일시"));
 
                 } catch (ParseException e) {
                     System.err.println("날짜 파싱 오류: " + e.getMessage());
@@ -140,10 +147,23 @@ public class EcampusCrawler {
                 a.title = title;
                 a.course = course_name;
                 a.link = assign_link;
-                a.dueDate = date;   
+                a.dueDate = date;
+                a.isPassed = datas.get("제출 여부").contains("완료") || datas.get("제출 여부").contains("요구하지 않습니다.");
                 list.add(a);
         	}
         }
         return list;
+    }
+    
+    public boolean getPassed(String link) throws Exception {
+        Document assign_page = Jsoup.connect(link).timeout(5000).get();
+		Elements main_elements = assign_page.select("#region-main");
+		String title = main_elements.select("h2").text();
+		HashMap<String, String> datas = new HashMap<String, String>();
+		Elements target_table = main_elements.select("td");
+		for (int i = 0; i < target_table.size(); i += 2) {
+			datas.put(target_table.get(i).text(), target_table.get(i+1).text());
+		}
+        return datas.get("제출 여부").contains("완료") || datas.get("제출 여부").contains("요구하지 않습니다.");
     }
 }

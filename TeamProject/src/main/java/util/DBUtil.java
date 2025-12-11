@@ -10,6 +10,14 @@ public class DBUtil {
     private static final String PASSWORD = "4321";
 
 
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver"); // MySQL 8
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static Connection getConnection() throws Exception {
         Class.forName(DRIVER);
         return DriverManager.getConnection(URL, USER, PASSWORD);

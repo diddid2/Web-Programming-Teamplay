@@ -103,8 +103,8 @@
             // ===== 신규 과제 INSERT =====
             String insSql =
                 "INSERT INTO ASSIGNMENT " +
-                "(ASSIGN_NO, USER_ID, TITLE, COURSE_NAME, START_DATE, DUE_DATE, PRIORITY, STATUS, CREATED_AT, IS_PASSED, LINK) " +
-                "VALUES (ASSIGNMENT_SEQ.NEXTVAL, ?, ?, ?, NULL, ?, 1, 'TODO', SYSDATE, ?, ?)";
+                "(USER_ID, TITLE, COURSE_NAME, START_DATE, DUE_DATE, PRIORITY, STATUS, CREATED_AT, IS_PASSED, LINK) " +
+                "VALUES (?, ?, ?, NULL, ?, 1, 'TODO', SYSDATE(), ?, ?)";
             pstmt = conn.prepareStatement(insSql);
             pstmt.setString(1, userId);
             pstmt.setString(2, a.title.trim());

@@ -63,8 +63,8 @@
         // (2) 새 기록 INSERT
         String sql =
             "INSERT INTO USER_TIMETABLE " +
-            "(TT_NO, USER_ID, TITLE, PROFESSOR, DAY, START_MIN, END_MIN, UPDATED_AT) " +
-            "VALUES (USER_TIMETABLE_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, SYSDATE)";
+            "(USER_ID, TITLE, PROFESSOR, DAY, START_MIN, END_MIN, UPDATED_AT) " +
+            "VALUES (?, ?, ?, ?, ?, ?, SYSDATE())";
 
         try (PreparedStatement ins = conn.prepareStatement(sql)) {
             for (TimetableCrawler.Lecture L : list) {

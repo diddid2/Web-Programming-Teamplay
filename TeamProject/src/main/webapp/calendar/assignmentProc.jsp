@@ -60,8 +60,8 @@
 
         String sql =
             "INSERT INTO ASSIGNMENT " +
-            "(ASSIGN_NO, USER_ID, TITLE, COURSE_NAME, DESCRIPTION, START_DATE, DUE_DATE, PRIORITY, STATUS, CREATED_AT) " +
-            "VALUES (ASSIGNMENT_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, 'TODO', SYSDATE)";
+            "(USER_ID, TITLE, COURSE_NAME, DESCRIPTION, START_DATE, DUE_DATE, PRIORITY, STATUS, CREATED_AT) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 'TODO', SYSDATE())";
 
         pstmt = conn.prepareStatement(sql);
         pstmt.setString(1, loginUser);

@@ -17,7 +17,7 @@
         conn = DBUtil.getConnection();
         out.println("<h3>Oracle 연결 성공</h3>");
 
-        String sql = "SELECT SYSDATE FROM DUAL";
+        String sql = "SELECT SYSDATE() FROM DUAL";
         pstmt = conn.prepareStatement(sql);
         rs = pstmt.executeQuery();
         if (rs.next()) {

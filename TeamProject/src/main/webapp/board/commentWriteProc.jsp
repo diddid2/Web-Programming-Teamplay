@@ -25,8 +25,8 @@
     try {
         conn = DBUtil.getConnection();
 
-        String sql = "INSERT INTO BOARD_COMMENT (COMMENT_NO, POST_NO, USER_ID, CONTENT) " +
-                     "VALUES (BOARD_COMMENT_SEQ.NEXTVAL, ?, ?, ?)";
+        String sql = "INSERT INTO BOARD_COMMENT (POST_NO, USER_ID, CONTENT) " +
+                     "VALUES (?, ?, ?)";
         pstmt = conn.prepareStatement(sql);
         pstmt.setInt(1, postNo);
         pstmt.setString(2, userId);

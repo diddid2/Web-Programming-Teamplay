@@ -29,7 +29,7 @@
             "SET EVERYTIME_ID = ?, EVERYTIME_PW = ?, " +
             "    KANGNAM_ID = ?, KANGNAM_PW = ?, " +
             "    ECAMPUS_ID = ?, ECAMPUS_PW = ?, " +
-            "    UPDATED_AT = SYSDATE " +
+            "    UPDATED_AT = SYSDATE() " +
             "WHERE USER_ID = ?";
 
         pstmt = conn.prepareStatement(updateSql);
@@ -49,7 +49,7 @@
             String insertSql =
                 "INSERT INTO USER_INTEGRATION " +
                 "(USER_ID, EVERYTIME_ID, EVERYTIME_PW, KANGNAM_ID, KANGNAM_PW, ECAMPUS_ID, ECAMPUS_PW, UPDATED_AT) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, SYSDATE)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, SYSDATE())";
 
             pstmt = conn.prepareStatement(insertSql);
             pstmt.setString(1, userId);

@@ -152,7 +152,7 @@
                     String sql =
                         "SELECT POST_NO, TITLE, USER_ID, " +
                         "       LIKE_COUNT, SCRAP_COUNT, COMMENT_COUNT, HIT, " +
-                        "       TO_CHAR(CREATED_AT, 'YYYY-MM-DD HH24:MI') AS CREATED_AT " +
+                        "       DATE_FORMAT(CREATED_AT, '%Y-%m-%d') AS CREATED_AT " +
                         "FROM BOARD_POST " +
                         "ORDER BY POST_NO DESC";
 

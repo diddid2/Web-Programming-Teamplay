@@ -19,8 +19,8 @@
         // 비밀번호 해시
         String hashedPw = PasswordUtil.hashPassword(userPw);
 
-        String sql = "INSERT INTO MEMBER (MEMBER_NO, USER_ID, USER_PW, NAME, MAJOR) " +
-                     "VALUES (MEMBER_SEQ.NEXTVAL, ?, ?, ?, ?)";
+        String sql = "INSERT INTO MEMBER (USER_ID, USER_PW, NAME, MAJOR) " +
+                     "VALUES (?, ?, ?, ?)";
         pstmt = conn.prepareStatement(sql);
         pstmt.setString(1, userId);
         pstmt.setString(2, hashedPw);

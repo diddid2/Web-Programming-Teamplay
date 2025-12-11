@@ -42,7 +42,7 @@
         // 2) 게시글 정보 조회
         String sql =
             "SELECT TITLE, CONTENT, USER_ID, LIKE_COUNT, SCRAP_COUNT, COMMENT_COUNT, HIT, " +
-            "       TO_CHAR(CREATED_AT, 'YYYY-MM-DD HH24:MI') AS CREATED_AT " +
+            "       DATE_FORMAT(CREATED_AT, '%Y-%m-%d') AS CREATED_AT " +
             "FROM BOARD_POST WHERE POST_NO = ?";
         pstmt = conn.prepareStatement(sql);
         pstmt.setInt(1, postNo);
@@ -278,7 +278,7 @@
                 connC = DBUtil.getConnection();
                 String cSql =
                     "SELECT COMMENT_NO, USER_ID, CONTENT, " +
-                    "       TO_CHAR(CREATED_AT, 'YYYY-MM-DD HH24:MI') AS CREATED_AT " +
+                    "       DATE_FORMAT(CREATED_AT, '%Y-%m-%d') AS CREATED_AT " +
                     "FROM BOARD_COMMENT " +
                     "WHERE POST_NO = ? " +
                     "ORDER BY COMMENT_NO ASC";

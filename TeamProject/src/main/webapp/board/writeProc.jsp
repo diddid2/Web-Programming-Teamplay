@@ -30,8 +30,8 @@
 
         String sql =
             "INSERT INTO BOARD_POST " +
-            " (POST_NO, USER_ID, TITLE, CONTENT) " +
-            "VALUES (BOARD_POST_SEQ.NEXTVAL, ?, ?, ?)";
+            " (USER_ID, TITLE, CONTENT) " +
+            "VALUES (?, ?, ?)";
 
         pstmt = conn.prepareStatement(sql);
         pstmt.setString(1, userId);

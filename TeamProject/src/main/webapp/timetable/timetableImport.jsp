@@ -57,9 +57,9 @@
                     // 새 데이터 INSERT
                     String insSql =
                         "INSERT INTO TIMETABLE_ENTRY " +
-                        "(ENTRY_ID, USER_ID, SEMESTER, COURSE_NAME, PROFESSOR, CLASSROOM, " +
+                        "(USER_ID, SEMESTER, COURSE_NAME, PROFESSOR, CLASSROOM, " +
                         " DAY_OF_WEEK, START_PERIOD, END_PERIOD, COLOR, RAW_TEXT, CREATED_AT, UPDATED_AT) " +
-                        "VALUES (TIMETABLE_ENTRY_SEQ.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATE, SYSDATE)";
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATE(), SYSDATE())";
                     pstmt = conn.prepareStatement(insSql);
 
                     for (LectureSlot s : slots) {

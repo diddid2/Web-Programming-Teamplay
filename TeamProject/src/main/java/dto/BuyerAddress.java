@@ -1,9 +1,9 @@
 package dto;
 
-/**
- * 즉시구매(택배) 기본 배송지
- * - 구매자가 체크아웃에서 입력한 배송지를 저장해두었다가 다음 구매 시 기본값으로 불러옵니다.
- */
+
+
+
+
 public class BuyerAddress {
     private int buyerId;
     private String recipientName;

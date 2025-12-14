@@ -20,9 +20,9 @@ import java.util.UUID;
 
 @WebServlet("/market/update")
 @MultipartConfig(
-        fileSizeThreshold = 1024 * 1024,      // 1MB
-        maxFileSize = 5 * 1024 * 1024,        // 5MB
-        maxRequestSize = 6 * 1024 * 1024      // 6MB
+        fileSizeThreshold = 1024 * 1024,      
+        maxFileSize = 5 * 1024 * 1024,        
+        maxRequestSize = 6 * 1024 * 1024      
 )
 public class MarketUpdateServlet extends HttpServlet {
 
@@ -49,7 +49,7 @@ public class MarketUpdateServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         String ctx = request.getContextPath();
 
-        // 로그인 체크
+        
         HttpSession session = request.getSession(false);
         Integer memberNo = null;
         if (session != null) {
@@ -81,7 +81,7 @@ public class MarketUpdateServlet extends HttpServlet {
             return;
         }
 
-        // 파라미터
+        
         String title = emptyToNull(request.getParameter("title"));
         String category = emptyToNull(request.getParameter("category"));
         String priceStr = emptyToNull(request.getParameter("price"));
@@ -116,7 +116,7 @@ public class MarketUpdateServlet extends HttpServlet {
             return;
         }
 
-        // 썸네일 업로드(선택)
+        
         String thumbnailUrl = null;
         Part thumbnailPart = null;
         try {
@@ -143,7 +143,7 @@ public class MarketUpdateServlet extends HttpServlet {
                 Files.copy(in, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
 
-            // DB에는 컨텍스트 제외한 상대 경로로 저장
+            
             thumbnailUrl = "/resources/MarketThumbnail/" + fileName;
         }
 
@@ -161,7 +161,7 @@ public class MarketUpdateServlet extends HttpServlet {
         item.setDescription(description);
         item.setStatus(status);
 
-        // 새 썸네일 업로드가 있으면 교체 (없으면 기존 유지)
+        
         item.setThumbnailUrl(thumbnailUrl);
 
         boolean ok = marketItemDao.update(item);

@@ -12,7 +12,7 @@
         return;
     }
 
-    // memberNo 보정
+    
     if (memberNo == null) {
         try (java.sql.Connection conn = util.DBUtil.getConnection();
              java.sql.PreparedStatement ps = conn.prepareStatement("SELECT MEMBER_NO FROM MEMBER WHERE USER_ID=?")) {
@@ -34,7 +34,7 @@
         return;
     }
 
-    // ✅ 바로구매(즉시구매) 전용 장바구니
+    
     String cartType = "IMMEDIATE";
 
     MarketItemDao itemDao = new MarketItemDao();
@@ -44,25 +44,25 @@
         return;
     }
 
-    // 내 상품은 담지 않도록
+    
     if (item.getWriterId() != null && item.getWriterId().intValue() == memberNo.intValue()) {
         out.println("<script>alert('내가 올린 상품은 장바구니에 담을 수 없어요.'); location.href='" + ctx + "/market/marketView.jsp?id=" + itemId + "';</script>");
         return;
     }
 
-    // 바로구매 옵션 체크
+    
     if (!item.isInstantBuy()) {
         out.println("<script>alert('바로구매 상품만 장바구니에 담을 수 있어요.'); location.href='" + ctx + "/market/marketView.jsp?id=" + itemId + "';</script>");
         return;
     }
 
-    // 판매중만 담기 가능
+    
     if (item.getStatus() != null && !"ON_SALE".equalsIgnoreCase(item.getStatus())) {
         out.println("<script>alert('판매중인 상품만 담을 수 있습니다.'); location.href='" + ctx + "/market/marketView.jsp?id=" + itemId + "';</script>");
         return;
     }
 
-    // 바로구매는 택배/직거래+택배만 허용(송장 기반 배송추적)
+    
     String tradeType = (item.getTradeType() == null) ? "" : item.getTradeType().toUpperCase();
     boolean allowDelivery = "DELIVERY".equals(tradeType) || "BOTH".equals(tradeType);
     if (!allowDelivery) {

@@ -24,7 +24,7 @@
         return;
     }
 
-    // 혹시 모를 공백 정리(선택)
+    
     title = title.trim();
 
     Connection conn = null;
@@ -33,9 +33,9 @@
     try {
         conn = DBUtil.getConnection();
 
-        // ✅ 공지사항 테이블로 INSERT
-        // 목록에서 NOTICE_NO, HIT, CREATED_AT을 조회하고 있으니,
-        // 보통 CREATED_AT은 NOW(), HIT은 0으로 시작하게 함.
+        
+        
+        
         String sql =
             "INSERT INTO BOARD_NOTICE (USER_ID, TITLE, CONTENT, HIT, CREATED_AT) " +
             "VALUES (?, ?, ?, 0, NOW())";

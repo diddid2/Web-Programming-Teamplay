@@ -15,7 +15,7 @@
     try {
         conn = DBUtil.getConnection();
 
-        // 입력된 비밀번호를 해시
+        
         String hashedInputPw = PasswordUtil.hashPassword(userPw);
 
         String sql = "SELECT USER_ID, NAME, USER_PW " +

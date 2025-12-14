@@ -27,7 +27,7 @@
     String userId = (String) session.getAttribute("userId");
     Integer memberNo = (Integer) session.getAttribute("memberNo");
 
-    // memberNo 보정(로그인한 경우)
+    
     if (userId != null && memberNo == null) {
         try (Connection conn = util.DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement("SELECT MEMBER_NO FROM MEMBER WHERE USER_ID=?")) {

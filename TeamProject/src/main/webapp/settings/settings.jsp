@@ -8,7 +8,7 @@
     String userName = (String) session.getAttribute("userName");
     request.setAttribute("currentMenu", "settings");
     
-    // 로그인 안 되어 있으면 로그인 페이지로 보냄
+    
     if (userId == null) {
         response.sendRedirect("../login.jsp");
         return;
@@ -216,14 +216,14 @@
     <div class="card">
         <div class="card-title">외부 서비스 계정 정보</div>
         <div class="card-sub">
-            입력한 정보는 이 프로젝트의 Oracle DB에 저장되며, 자동 로그인·데이터 연동에만 사용됩니다.
+            입력한 정보는 이 프로젝트의 MySQL DB에 저장되며, 자동 로그인·데이터 연동에만 사용됩니다.
             실제 서비스 계정보다는 <b>실습용 계정 사용</b>을 권장합니다.
         </div>
 
         <form action="settingsProc.jsp" method="post">
             <div class="section-grid">
 
-                <!-- 에브리타임 -->
+                
                 <div class="section">
                     <div class="section-header">에브리타임 계정</div>
                     <div class="section-desc">
@@ -236,7 +236,7 @@
                     <input type="password" id="everytimePw" name="everytimePw" value="<%= everytimePw %>">
                 </div>
 
-                <!-- 강남대 포털 -->
+                
                 <div class="section">
                     <div class="section-header">강남대 포털 계정</div>
                     <div class="section-desc">
@@ -249,7 +249,7 @@
                     <input type="password" id="kangnamPw" name="kangnamPw" value="<%= kangnamPw %>">
                 </div>
 
-                <!-- e캠퍼스 -->
+                
                 <div class="section">
                     <div class="section-header">e캠퍼스 계정</div>
                     <div class="section-desc">

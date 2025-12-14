@@ -36,7 +36,7 @@
     try {
         conn = DBUtil.getConnection();
 
-        // 1) 현재 비밀번호 해시 가져오기
+        
         String selectSql = "SELECT USER_PW FROM MEMBER WHERE USER_ID = ?";
         pstmt = conn.prepareStatement(selectSql);
         pstmt.setString(1, userId);
@@ -54,14 +54,14 @@
             return;
         }
 
-        // 2) 현재 비밀번호 확인
+        
         boolean ok = PasswordUtil.matches(curPw, storedHash);
         if (!ok) {
             out.println("<script>alert('현재 비밀번호가 올바르지 않습니다.'); history.back();</script>");
             return;
         }
 
-        // 3) 새 비밀번호 해시로 업데이트
+        
         String newHash = PasswordUtil.hashPassword(newPw);
 
         String updateSql = "UPDATE MEMBER SET USER_PW = ? WHERE USER_ID = ?";

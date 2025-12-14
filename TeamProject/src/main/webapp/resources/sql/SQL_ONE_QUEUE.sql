@@ -1,23 +1,23 @@
--- ==========================================
--- KangnamTime 프로젝트 MySQL 전체 DDL
--- (Oracle → MySQL 변환 버전)
--- ==========================================
 
--- 0. 데이터베이스 생성 및 선택
+
+
+
+
+
 CREATE DATABASE IF NOT EXISTS kangnamtime
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
 USE kangnamtime;
 
--- kangnamtime 라는 계정 생성 (비번은 너가 원하는 걸로)
+
 CREATE USER IF NOT EXISTS 'kangnamtime'@'localhost' IDENTIFIED BY '4321';
 
--- DB 권한 주기 (DB 이름 kangnamtime 라고 가정)
+
 GRANT ALL PRIVILEGES ON kangnamtime.* TO 'kangnamtime'@'localhost';
 FLUSH PRIVILEGES;
 
--- 안전하게 드랍 (처음 세팅할 때 한 번만 사용)
+
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS BOARD_LIKE;
@@ -31,22 +31,22 @@ DROP TABLE IF EXISTS MEMBER;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- ==========================================
--- 1. MEMBER (회원)
--- ==========================================
+
+
+
 CREATE TABLE MEMBER (
     MEMBER_NO   INT AUTO_INCREMENT PRIMARY KEY,
     USER_ID     VARCHAR(50)  NOT NULL UNIQUE,
-    USER_PW     VARCHAR(200) NOT NULL,        -- 해시된 비밀번호
+    USER_PW     VARCHAR(200) NOT NULL,        
     NAME        VARCHAR(50)  NOT NULL,
     MAJOR       VARCHAR(100),
     CREATED_AT  DATETIME     DEFAULT NOW()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ==========================================
--- 2. USER_INTEGRATION (외부 계정 연동)
---    에브리타임 / 이캠퍼스 계정 저장 등
--- ==========================================
+
+
+
+
 CREATE TABLE USER_INTEGRATION (
     USER_ID       VARCHAR(50)  NOT NULL,
     EVERYTIME_ID  VARCHAR(100),
@@ -62,18 +62,18 @@ CREATE TABLE USER_INTEGRATION (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ==========================================
--- 3. BOARD_POST (게시글)
--- ==========================================
+
+
+
 CREATE TABLE BOARD_POST (
-    POST_NO        INT AUTO_INCREMENT PRIMARY KEY,   -- NUMBER → INT + AUTO_INCREMENT
-    USER_ID        VARCHAR(50) NOT NULL,             -- FK → MEMBER.USER_ID
+    POST_NO        INT AUTO_INCREMENT PRIMARY KEY,   
+    USER_ID        VARCHAR(50) NOT NULL,             
     TITLE          VARCHAR(200) NOT NULL,
-    CONTENT        TEXT NOT NULL,                    -- CLOB → TEXT
-    HIT            INT DEFAULT 0,                    -- NUMBER
-    LIKE_COUNT     INT DEFAULT 0,                    -- NUMBER
-    SCRAP_COUNT    INT DEFAULT 0,                    -- NUMBER
-    COMMENT_COUNT  INT DEFAULT 0,                    -- NUMBER
+    CONTENT        TEXT NOT NULL,                    
+    HIT            INT DEFAULT 0,                    
+    LIKE_COUNT     INT DEFAULT 0,                    
+    SCRAP_COUNT    INT DEFAULT 0,                    
+    COMMENT_COUNT  INT DEFAULT 0,                    
     CREATED_AT     DATETIME DEFAULT NOW(),
 
     CONSTRAINT FK_POST_MEMBER
@@ -83,9 +83,9 @@ CREATE TABLE BOARD_POST (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
--- ==========================================
--- 4. BOARD_COMMENT (댓글)
--- ==========================================
+
+
+
 
 CREATE TABLE BOARD_COMMENT (
     COMMENT_NO   INT AUTO_INCREMENT PRIMARY KEY,
@@ -104,9 +104,9 @@ CREATE TABLE BOARD_COMMENT (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
--- ==========================================
--- 5. BOARD_LIKE (게시글 공감)
--- ==========================================
+
+
+
 CREATE TABLE BOARD_LIKE (
     POST_NO      INT         NOT NULL,
     USER_ID      VARCHAR(50) NOT NULL,
@@ -120,9 +120,9 @@ CREATE TABLE BOARD_LIKE (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ==========================================
--- 6. BOARD_SCRAP (게시글 스크랩)
--- ==========================================
+
+
+
 CREATE TABLE BOARD_SCRAP (
     POST_NO      INT         NOT NULL,
     USER_ID      VARCHAR(50) NOT NULL,
@@ -136,23 +136,23 @@ CREATE TABLE BOARD_SCRAP (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ==========================================
--- 7. ASSIGNMENT (과제 스케줄러)
--- ==========================================
+
+
+
 CREATE TABLE ASSIGNMENT (
-    ASSIGN_NO      INT AUTO_INCREMENT PRIMARY KEY,   -- NUMBER → INT + AUTO_INCREMENT
-    USER_ID        VARCHAR(50)  NOT NULL,            -- VARCHAR2(50)
-    TITLE          VARCHAR(200) NOT NULL,            -- VARCHAR2(200)
-    COURSE_NAME    VARCHAR(200),                     -- VARCHAR2(200)
-    DESCRIPTION    TEXT,                             -- CLOB → TEXT
-    START_DATE     DATE,                             -- DATE
-    DUE_DATE       DATE        NOT NULL,             -- DATE NOT NULL
-    PRIORITY       INT,                              -- NUMBER
-    STATUS         VARCHAR(20),                      -- VARCHAR2(20)
-    CREATED_AT     DATETIME DEFAULT NOW(),           -- DATE → DATETIME
-    UPDATED_AT     DATETIME,                         -- DATE → DATETIME
-    IS_PASSED      TINYINT(1),                       -- NUMBER(1) → TINYINT(1)
-    LINK           VARCHAR(1000),                    -- VARCHAR2(1000)
+    ASSIGN_NO      INT AUTO_INCREMENT PRIMARY KEY,   
+    USER_ID        VARCHAR(50)  NOT NULL,            
+    TITLE          VARCHAR(200) NOT NULL,            
+    COURSE_NAME    VARCHAR(200),                     
+    DESCRIPTION    TEXT,                             
+    START_DATE     DATE,                             
+    DUE_DATE       DATE        NOT NULL,             
+    PRIORITY       INT,                              
+    STATUS         VARCHAR(20),                      
+    CREATED_AT     DATETIME DEFAULT NOW(),           
+    UPDATED_AT     DATETIME,                         
+    IS_PASSED      TINYINT(1),                       
+    LINK           VARCHAR(1000),                    
 
     CONSTRAINT FK_ASSIGN_MEMBER
         FOREIGN KEY (USER_ID)
@@ -160,19 +160,19 @@ CREATE TABLE ASSIGNMENT (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ==========================================
--- 8. LECTURE (시간표 / 강의 정보)
---    timetableMain.jsp에서 사용
--- ==========================================
+
+
+
+
 CREATE TABLE LECTURE (
     LECTURE_ID   INT AUTO_INCREMENT PRIMARY KEY,
     USER_ID      VARCHAR(50)  NOT NULL,
-    TITLE        VARCHAR(200) NOT NULL,       -- 과목명
-    DAY          VARCHAR(10),                 -- 요일 (MON, TUE / 월, 화 등)
-    START_MIN    INT,                         -- 하루 기준 분 단위 시작시간
-    END_MIN      INT,                         -- 분 단위 종료시간
-    LOCATION     VARCHAR(200),                -- 강의실
-    COLOR        VARCHAR(20),                 -- 블록 색상(선택)
+    TITLE        VARCHAR(200) NOT NULL,       
+    DAY          VARCHAR(10),                 
+    START_MIN    INT,                         
+    END_MIN      INT,                         
+    LOCATION     VARCHAR(200),                
+    COLOR        VARCHAR(20),                 
     CREATED_AT   DATETIME     DEFAULT NOW(),
     UPDATED_AT   DATETIME,
     CONSTRAINT FK_LEC_MEMBER FOREIGN KEY (USER_ID)
@@ -182,20 +182,20 @@ CREATE TABLE LECTURE (
 
 
 CREATE TABLE market_item (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,      -- 글 번호
-    title VARCHAR(100) NOT NULL,              -- 제목
-    category VARCHAR(30) NOT NULL,            -- 교재 · 전공책 / 전자기기 / 자취템 / 패션 · 잡화 / 기타
-    price INT NOT NULL,                       -- 가격 (원)
-    status VARCHAR(20) NOT NULL,              -- ON_SALE / RESERVED / SOLD_OUT
-    campus VARCHAR(30) NOT NULL,              -- 강남대 정문 / 기숙사 / 역 인근 등
-    meeting_place VARCHAR(100) NULL,          -- 교양관 근처 등
-    meeting_time VARCHAR(100) NULL,           -- 오늘 18:00 직거래 가능 등 간단 텍스트
-    trade_type VARCHAR(20) NOT NULL,          -- DIRECT / DELIVERY / BOTH
-    wish_count INT NOT NULL DEFAULT 0,        -- 찜 수
-    chat_count INT NOT NULL DEFAULT 0,        -- 채팅 수
-    thumbnail_url VARCHAR(255) NULL,          -- 썸네일 이미지 경로 (나중에 파일 업로드 붙일 때 사용)
-    description TEXT NULL,                    -- 상세 설명 (글쓰기 페이지에서 작성)
-    writer_id INT NULL,                       -- 작성자 (회원 PK)
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,      
+    title VARCHAR(100) NOT NULL,              
+    category VARCHAR(30) NOT NULL,            
+    price INT NOT NULL,                       
+    status VARCHAR(20) NOT NULL,              
+    campus VARCHAR(30) NOT NULL,              
+    meeting_place VARCHAR(100) NULL,          
+    meeting_time VARCHAR(100) NULL,           
+    trade_type VARCHAR(20) NOT NULL,          
+    wish_count INT NOT NULL DEFAULT 0,        
+    chat_count INT NOT NULL DEFAULT 0,        
+    thumbnail_url VARCHAR(255) NULL,          
+    description TEXT NULL,                    
+    writer_id INT NULL,                       
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -212,14 +212,14 @@ CREATE TABLE BOARD_NOTICE (
   COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE USER_TIMETABLE (
-    TT_NO       INT AUTO_INCREMENT PRIMARY KEY,   -- 시간표 번호 (자동 증가)
-    USER_ID     VARCHAR(50)      NOT NULL,        -- 로그인 유저 ID
-    TITLE       VARCHAR(200)     NOT NULL,        -- 과목명
-    PROFESSOR   VARCHAR(100),                     -- 교수명
-    DAY         TINYINT          NOT NULL,        -- 요일 (0~4 or 1~5 기존 로직 그대로)
-    START_MIN   INT              NOT NULL,        -- 시작 시간 (분 단위, 9시=540)
-    END_MIN     INT              NOT NULL,        -- 종료 시간 (분 단위)
-    UPDATED_AT  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP  -- 동기화 시각
+    TT_NO       INT AUTO_INCREMENT PRIMARY KEY,   
+    USER_ID     VARCHAR(50)      NOT NULL,        
+    TITLE       VARCHAR(200)     NOT NULL,        
+    PROFESSOR   VARCHAR(100),                     
+    DAY         TINYINT          NOT NULL,        
+    START_MIN   INT              NOT NULL,        
+    END_MIN     INT              NOT NULL,        
+    UPDATED_AT  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP  
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
@@ -234,8 +234,8 @@ CREATE TABLE market_buyer_address (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 강남마켓 장바구니 테이블 (MySQL)
--- 실행 전: market_item(id), MEMBER(MEMBER_NO) 존재 가정
+
+
 
 CREATE TABLE IF NOT EXISTS market_cart (
     cart_id    BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -252,8 +252,8 @@ CREATE TABLE IF NOT EXISTS market_cart (
     CONSTRAINT fk_cart_item   FOREIGN KEY (item_id) REFERENCES market_item(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 강남마켓 채팅 테이블 (MySQL)
--- 실행 전: market_item(id), MEMBER(MEMBER_NO) 존재 가정
+
+
 
 CREATE TABLE IF NOT EXISTS market_chat_room (
     room_id     BIGINT AUTO_INCREMENT PRIMARY KEY,

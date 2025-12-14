@@ -3,7 +3,6 @@
 <%@ page import="util.DBUtil" %>
 
 <%!
-    // 간단 HTML escape (제목에 < > 들어가도 안전)
     public String h(String s) {
         if (s == null) return "";
         return s.replace("&", "&amp;")
@@ -167,7 +166,7 @@
             </div>
         </div>
 
-        <!-- ✅ 공지사항 최근 3개 DB 연동 -->
+        
         <div class="notice-card">
             <div class="notice-header">
                 <span>📢 공지사항</span>
@@ -236,8 +235,8 @@
                     <div class="menu-tag">BOARD</div>
                     <div class="menu-title">게시판</div>
                     <div class="menu-desc">
-                        메인 게시판에서 실시간 학교 이야기 확인하고,
-                        핫게시판에서 오늘 제일 뜨거운 글만 모아서 봅니다.
+                        메인 게시판에서 실시간 학교 이야기 확인하고<br>
+                        소통해보세요
                     </div>
                 </div>
                 <div class="menu-footer">
@@ -248,11 +247,11 @@
 
             <a href="<%= ctx %>/calendar/calendarMain.jsp" class="menu-card">
                 <div>
-                    <div class="menu-tag">CALENDAR · AI</div>
-                    <div class="menu-title">캘린더 & 시간표</div>
+                    <div class="menu-tag">TIMETABLE</div>
+                    <div class="menu-title">시간표</div>
                     <div class="menu-desc">
                         기본 시간표 관리 +
-                        학과/공강 요일을 입력하면 AI가 꿀강 위주로 시간표를 추천합니다.
+                        이러닝캡퍼스에 연동된 계정을<br>통해 시간표를 불러옵니다.
                     </div>
                 </div>
                 <div class="menu-footer">

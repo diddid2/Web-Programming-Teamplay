@@ -4,7 +4,7 @@
 <%
     request.setCharacterEncoding("UTF-8");
 
-    // GNB에 현재 탭 표시
+    
     request.setAttribute("currentMenu", "board");
 
     String loginUser = (String) session.getAttribute("userId");

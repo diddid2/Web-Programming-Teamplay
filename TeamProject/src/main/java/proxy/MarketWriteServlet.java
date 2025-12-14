@@ -20,9 +20,9 @@ import java.util.UUID;
 
 @WebServlet("/market/write")
 @MultipartConfig(
-        fileSizeThreshold = 1024 * 1024,      // 1MB
-        maxFileSize = 5 * 1024 * 1024,        // 5MB
-        maxRequestSize = 6 * 1024 * 1024      // 6MB
+        fileSizeThreshold = 1024 * 1024,      
+        maxFileSize = 5 * 1024 * 1024,        
+        maxRequestSize = 6 * 1024 * 1024      
 )
 public class MarketWriteServlet extends HttpServlet {
 
@@ -44,7 +44,7 @@ public class MarketWriteServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         String ctx = request.getContextPath();
 
-        // 로그인 체크
+        
         HttpSession session = request.getSession(false);
         Integer memberNo = null;
         if (session != null) {
@@ -56,7 +56,7 @@ public class MarketWriteServlet extends HttpServlet {
             return;
         }
 
-        // id 쿼리 검증: ?id=로그인된 사용자 memberNo
+        
         String idParam = request.getParameter("id");
         if (idParam != null && !idParam.isBlank() && !idParam.equals(String.valueOf(memberNo))) {
             response.setContentType("text/html; charset=UTF-8");
@@ -64,7 +64,7 @@ public class MarketWriteServlet extends HttpServlet {
             return;
         }
 
-        // 파라미터 읽기
+        
         String title = emptyToNull(request.getParameter("title"));
         String category = emptyToNull(request.getParameter("category"));
         String priceStr = emptyToNull(request.getParameter("price"));
@@ -75,7 +75,7 @@ public class MarketWriteServlet extends HttpServlet {
         String description = emptyToNull(request.getParameter("description"));
         boolean instantBuy = request.getParameter("instantBuy") != null;
 
-        // 필수값 체크 (price는 0도 허용하지만 입력은 있어야 함)
+        
         if (title == null || category == null || campus == null || tradeType == null || priceStr == null) {
             response.setContentType("text/html; charset=UTF-8");
             response.getWriter().println("<script>alert('필수 항목을 모두 입력해주세요.');history.back();</script>");
@@ -98,13 +98,13 @@ public class MarketWriteServlet extends HttpServlet {
             return;
         }
 
-        // 썸네일 업로드 처리
+        
         String thumbnailUrl = null;
         Part thumbnailPart = null;
         try {
             thumbnailPart = request.getPart("thumbnail");
         } catch (IllegalStateException ignore) {
-            // multipart가 아니거나 설정 문제
+            
             thumbnailPart = null;
         }
 
@@ -117,7 +117,7 @@ public class MarketWriteServlet extends HttpServlet {
         	}
         	String fileName = UUID.randomUUID() + ext;
 
-        	// 저장
+        	
         	
 
 
@@ -130,11 +130,11 @@ public class MarketWriteServlet extends HttpServlet {
         	  Files.copy(in, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
         	}
 
-            // 웹에서 접근 가능한 경로로 저장
+            
             thumbnailUrl = "/resources/MarketThumbnail/" + fileName;
         }
 
-        // DTO 구성
+        
         MarketItem item = new MarketItem();
         item.setTitle(title);
         item.setCategory(category);
@@ -169,14 +169,14 @@ public class MarketWriteServlet extends HttpServlet {
     }
 
     private String getSubmittedFileName(Part part) {
-        // Content-Disposition: form-data; name="thumbnail"; filename="a.png"
+        
         String cd = part.getHeader("content-disposition");
         if (cd == null) return null;
         for (String token : cd.split(";")) {
             token = token.trim();
             if (token.startsWith("filename=")) {
                 String fileName = token.substring("filename=".length()).trim().replace("", "");
-                // IE/Edge 대응: C:\fakepath\a.png
+                
                 int lastSep = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));
                 if (lastSep != -1) fileName = fileName.substring(lastSep + 1);
                 return fileName;

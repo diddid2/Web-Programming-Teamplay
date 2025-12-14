@@ -23,28 +23,28 @@
     if (submitted) {
         timetableUrl = timetableUrl.trim();
         try {
-            // 1) 파싱
+            
             EverytimeTimetableParser parser = new EverytimeTimetableParser();
             slots = parser.parse(timetableUrl);
 
             if (slots == null || slots.isEmpty()) {
                 errorMsg = "시간표에서 과목 정보를 찾지 못했습니다. 링크 또는 셀렉터를 확인해주세요.";
             } else {
-                // 2) DB 저장
+                
                 Connection conn = null;
                 PreparedStatement pstmt = null;
 
                 try {
                     conn = DBUtil.getConnection();
 
-                    // 학기별로 기존 데이터 삭제 후 새로 삽입
-                    // 먼저 이번 링크에 등장한 학기 목록 수집
+                    
+                    
                     Set<String> semesters = new HashSet<>();
                     for (LectureSlot s : slots) {
                         if (s.semester != null) semesters.add(s.semester);
                     }
 
-                    // 해당 유저 + 학기들 기존 데이터 삭제
+                    
                     for (String sem : semesters) {
                         String delSql = "DELETE FROM TIMETABLE_ENTRY WHERE USER_ID = ? AND SEMESTER = ?";
                         pstmt = conn.prepareStatement(delSql);
@@ -54,7 +54,7 @@
                         pstmt.close();
                     }
 
-                    // 새 데이터 INSERT
+                    
                     String insSql =
                         "INSERT INTO TIMETABLE_ENTRY " +
                         "(USER_ID, SEMESTER, COURSE_NAME, PROFESSOR, CLASSROOM, " +

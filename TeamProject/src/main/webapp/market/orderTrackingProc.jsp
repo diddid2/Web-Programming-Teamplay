@@ -45,7 +45,7 @@
         return;
     }
 
-    // 채팅방에 시스템 메시지로 진행상황 UI 전송
+    
     MarketChatDao chatDao = new MarketChatDao();
     if (chatDao.isParticipant(roomId, memberNo)) {
         chatDao.insertMessage(roomId, null,

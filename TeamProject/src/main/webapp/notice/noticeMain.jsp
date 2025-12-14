@@ -4,7 +4,7 @@
 <%
     request.setCharacterEncoding("UTF-8");
 
-    // GNB에 현재 탭 표시 (공지사항 탭 이름에 맞게 수정)
+    
     request.setAttribute("currentMenu", "notice");
 
     String loginUser = (String) session.getAttribute("userId");
@@ -128,7 +128,7 @@
             </div>
         </div>
         <div>
-            <!-- 필요하다면 관리자만 글쓰기 버튼 보이게 조건 추가 가능 -->
+            
             <button class="btn-write" onclick="location.href='noticeWrite.jsp'">공지 등록</button>
         </div>
     </div>
@@ -148,7 +148,7 @@
                 try {
                     conn = DBUtil.getConnection();
 
-                    // 공지사항용 테이블/컬럼명은 프로젝트에 맞게 수정해서 사용
+                    
                     String sql =
                         "SELECT NOTICE_NO, TITLE, USER_ID, " +
                         "       HIT, DATE_FORMAT(CREATED_AT, '%Y-%m-%d') AS CREATED_AT " +
@@ -173,9 +173,9 @@
                     <td>
                         <div class="title-link">
                             <span><%= title %></span>
-                            <%-- 중요 공지에 뱃지 쓰고 싶으면 조건 넣어서 사용
-                            <span class="badge-hot">중요</span>
-                            --%>
+                            
+
+
                         </div>
                     </td>
                     <td class="col-info">

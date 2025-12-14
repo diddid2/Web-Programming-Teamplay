@@ -13,7 +13,7 @@
         return;
     }
 
-    // memberNo 보정
+    
     if (memberNo == null) {
         try (java.sql.Connection conn = util.DBUtil.getConnection();
              java.sql.PreparedStatement ps = conn.prepareStatement("SELECT MEMBER_NO FROM MEMBER WHERE USER_ID=?")) {
@@ -63,7 +63,7 @@
     if (roomId <= 0) {
         roomId = chatDao.getOrCreateRoom(itemId, sellerId, buyerId);
         if (roomId > 0) {
-            // 채팅방이 새로 생성된 경우만 카운트 증가
+            
             itemDao.increaseChatCount(itemId);
         }
     }

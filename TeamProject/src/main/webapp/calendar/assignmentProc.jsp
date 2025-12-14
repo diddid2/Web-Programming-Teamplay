@@ -37,7 +37,7 @@
 
     try {
         if (startStr != null && !startStr.trim().isEmpty()) {
-            startDate = java.sql.Date.valueOf(startStr); // yyyy-MM-dd
+            startDate = java.sql.Date.valueOf(startStr); 
         }
         dueDate = java.sql.Date.valueOf(dueStr);
     } catch (IllegalArgumentException e) {
@@ -78,7 +78,7 @@
         int cnt = pstmt.executeUpdate();
 
         if (cnt == 1) {
-            // 등록 성공 → 다시 해당 월 캘린더로
+            
             if (year > 0 && month > 0) {
                 out.println("<script>alert('과제가 등록되었습니다.'); location.href='calendarMain.jsp?year=" + year + "&month=" + month + "';</script>");
             } else {

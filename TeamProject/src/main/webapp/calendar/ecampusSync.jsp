@@ -16,12 +16,12 @@
     ResultSet rs = null;
 
     String ecId = null;
-    String ecPw = null;  // 여기서는 USER_INTEGRATION에 평문 또는 이미 복호화된 값이 들어있다고 가정
+    String ecPw = null;  
 
     try {
         conn = DBUtil.getConnection();
 
-        // 1) USER_INTEGRATION에서 이러닝캠퍼스 계정 정보 가져오기
+        
         String sql =
             "SELECT ECAMPUS_ID, ECAMPUS_PW " +
             "FROM USER_INTEGRATION " +
@@ -44,7 +44,7 @@
             return;
         }
 
-        // 2) 크롤러 로그인 + 과제 목록 가져오기
+        
         EcampusCrawler crawler = new EcampusCrawler();
         boolean ok = crawler.login(ecId, ecPw);
 
@@ -60,7 +60,7 @@
             if (a.title == null || a.title.trim().isEmpty() || a.dueDate == null) continue;
             boolean passed = a.isPassed;
 
-            // 중복 기준: USER_ID + TITLE + DUE_DATE
+            
             String chkSql =
                 "SELECT COUNT(*), IS_PASSED " +
                 "FROM ASSIGNMENT " +
@@ -79,7 +79,7 @@
             
             if (exists) {
             	if (rs.next() && rs.getInt(1) != (passed ? 1 : 0)) {
-	                // ===== 이미 등록된 과제면 IS_PASSED만 다시 업데이트 =====
+	                
 	                updateCount++;
 	                String updSql =
 	                    "UPDATE ASSIGNMENT " +
@@ -95,12 +95,12 @@
 	                pstmt.executeUpdate();
 	                pstmt.close();
             	}
-            	continue;   // INSERT는 하지 않음
+            	continue;   
             }
             rs.close();
             pstmt.close();
 
-            // ===== 신규 과제 INSERT =====
+            
             String insSql =
                 "INSERT INTO ASSIGNMENT " +
                 "(USER_ID, TITLE, COURSE_NAME, START_DATE, DUE_DATE, PRIORITY, STATUS, CREATED_AT, IS_PASSED, LINK) " +
@@ -108,9 +108,9 @@
             pstmt = conn.prepareStatement(insSql);
             pstmt.setString(1, userId);
             pstmt.setString(2, a.title.trim());
-            pstmt.setString(3, a.course);  // 크롤러에서 과목명 파싱해오면 세팅, 아니면 null
+            pstmt.setString(3, a.course);  
             pstmt.setDate(4, new java.sql.Date(a.dueDate.getTime()));
-            pstmt.setInt(5, passed ? 1 : 0);   // updatePassed 결과 사용
+            pstmt.setInt(5, passed ? 1 : 0);   
             pstmt.setString(6, a.link);
 
             insertCount += pstmt.executeUpdate();

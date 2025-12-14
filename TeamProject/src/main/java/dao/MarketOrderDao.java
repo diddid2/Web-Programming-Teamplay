@@ -9,29 +9,29 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 즉시구매(바로구매) 주문/배송(송장) 관리
- *
- * 주의: 실제 결제(PG) 연동은 별도이며, 여기서는 "결제 성공"을 가정하고
- *      주문 생성 + 상품 상태 변경 + 채팅 시스템 메시지 전송까지 수행합니다.
- */
+
+
+
+
+
+
 public class MarketOrderDao {
 
-    /**
-     * 하위호환(기존 호출부 보호용). 즉시구매는 택배 전용이므로 배송지 없이 결제 진행은 막습니다.
-     */
+    
+
+
     public List<Long> checkoutInstantCart(int buyerId) throws SQLException {
         throw new SQLException("배송지 정보가 필요합니다. 구매 화면에서 배송지를 입력해주세요.");
     }
 
-    /**
-     * 장바구니(즉시구매) 체크아웃
-     * - market_cart(IMMEDIATE) 상품들을 주문으로 생성
-     * - 주문 생성 후 market_item 상태를 SOLD_OUT으로 변경
-     * - 채팅방이 없으면 생성 후, 시스템 메시지 전송
-     * - 성공 시 만들어진 채팅방 roomId 목록 반환
-     * @throws Exception 
-     */
+    
+
+
+
+
+
+
+
     public List<Long> checkoutInstantCart(int buyerId, BuyerAddress addr) throws Exception {
         List<Long> roomIds = new ArrayList<>();
 
@@ -81,7 +81,7 @@ public class MarketOrderDao {
                     return roomIds;
                 }
 
-                // 다음번 구매 기본값으로 재사용하기 위해, 구매 성공 시 기본 배송지 upsert
+                
                 upsertBuyerDefaultAddress(conn, buyerId, addr);
 
                 MarketChatDao chatDao = new MarketChatDao();
@@ -93,7 +93,7 @@ public class MarketOrderDao {
                     int instantBuy;
                     String itemTitle = null;
 
-                    // 1) 상품 잠금 + 검증
+                    
                     try (PreparedStatement ps = conn.prepareStatement(lockItemSql)) {
                         ps.setLong(1, itemId);
                         try (ResultSet rs = ps.executeQuery()) {
@@ -118,7 +118,7 @@ public class MarketOrderDao {
                         throw new SQLException("이미 거래가 진행/완료된 상품이 포함되어 있습니다.");
                     }
 
-                    // 2) 주문 생성
+                    
                     long orderId;
                     try (PreparedStatement ps = conn.prepareStatement(insertOrderSql, Statement.RETURN_GENERATED_KEYS)) {
                         ps.setLong(1, itemId);
@@ -141,7 +141,7 @@ public class MarketOrderDao {
                         }
                     }
 
-                    // 3) 상품 상태 변경
+                    
                     try (PreparedStatement ps = conn.prepareStatement(updateItemSql)) {
                         ps.setInt(1, buyerId);
                         ps.setLong(2, itemId);
@@ -149,8 +149,8 @@ public class MarketOrderDao {
                         if (affected <= 0) throw new SQLException("상품 상태 변경 실패(동시구매 가능성)");
                     }
 
-                    // 4) 채팅방 생성/조회 + 시스템 메시지
-                    //    같은 트랜잭션(Connection)에서 처리해야 FK/락 대기 문제를 피할 수 있습니다.
+                    
+                    
                     long roomId = chatDao.getOrCreateRoom(conn, itemId, sellerId, buyerId);
                     if (roomId > 0) {
                         roomIds.add(roomId);
@@ -164,7 +164,7 @@ public class MarketOrderDao {
                     }
                 }
 
-                // 5) 장바구니 비우기
+                
                 try (PreparedStatement ps = conn.prepareStatement(clearCartSql)) {
                     ps.setInt(1, buyerId);
                     ps.executeUpdate();
@@ -182,9 +182,9 @@ public class MarketOrderDao {
         }
     }
 
-    /**
-     * roomId 기반으로 주문 조회 (없으면 null)
-     */
+    
+
+
     public MarketOrder findByRoom(long roomId) {
         String sql =
                 "SELECT o.order_id, o.item_id, o.seller_id, o.buyer_id, o.price, o.status, " +
@@ -206,9 +206,9 @@ public class MarketOrderDao {
         return null;
     }
 
-    /**
-     * 판매자가 송장번호 등록
-     */
+    
+
+
     public boolean setTracking(long orderId, int sellerId, String carrier, String trackingNumber) {
         String sql =
                 "UPDATE market_order SET carrier=?, tracking_number=?, status='SHIPPED', shipped_at=NOW() " +
@@ -226,7 +226,7 @@ public class MarketOrderDao {
         }
     }
 
-    /** 주문 단건 조회 (권한 체크용) */
+    
     public MarketOrder findById(long orderId) {
         String sql =
                 "SELECT order_id, item_id, seller_id, buyer_id, price, status, carrier, tracking_number, " +
@@ -245,7 +245,7 @@ public class MarketOrderDao {
         return null;
     }
 
-    /** 구매자 기본 배송지 조회(없으면 null) */
+    
     public BuyerAddress getBuyerDefaultAddress(int buyerId) {
         String sql =
                 "SELECT buyer_id, recipient_name, phone, postcode, address1, address2, memo " +
@@ -267,7 +267,7 @@ public class MarketOrderDao {
                 }
             }
         } catch (Exception e) {
-            // 테이블이 아직 없을 수도 있으니, 기본배송지 기능이 전체를 깨지 않게
+            
             e.printStackTrace();
         }
         return null;

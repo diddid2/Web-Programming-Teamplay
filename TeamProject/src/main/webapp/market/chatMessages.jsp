@@ -2,7 +2,7 @@
 <%@ page import="java.util.*, java.text.SimpleDateFormat, dao.MarketChatDao, dto.ChatMessage" %>
 
 <%!
-    // JSON 문자열 escape (JSP 선언부)
+    
     public static String jsonEscape(String s) {
         if (s == null) return "";
         StringBuilder sb = new StringBuilder();
@@ -26,7 +26,7 @@
 <%
     request.setCharacterEncoding("UTF-8");
 
-    // 캐시 방지
+    
     response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
     response.setHeader("Pragma", "no-cache");
 
@@ -43,7 +43,7 @@
     try { roomId = Long.parseLong(request.getParameter("roomId")); } catch(Exception e) {}
     try { after  = Long.parseLong(request.getParameter("after")); }  catch(Exception e) {}
 
-    // wait=1이면 롱폴링 모드(최대 25초 대기)
+    
     boolean wait = "1".equals(request.getParameter("wait"));
 
     if (roomId <= 0) {
@@ -62,20 +62,20 @@
     if (!wait) {
         list = dao.listMessages(roomId, after, 200);
     } else {
-        long deadline = System.currentTimeMillis() + 25000; // 25초
+        long deadline = System.currentTimeMillis() + 25000; 
         while (true) {
             list = dao.listMessages(roomId, after, 200);
-            if (list != null && !list.isEmpty()) break; // 새 메시지 있으면 즉시 반환
+            if (list != null && !list.isEmpty()) break; 
 
             if (System.currentTimeMillis() >= deadline) {
-                list = Collections.emptyList(); // 타임아웃이면 빈 배열
+                list = Collections.emptyList(); 
                 break;
             }
             try { Thread.sleep(700); } catch (Exception ignored) {}
         }
     }
 
-    // 새 메시지가 있다면 읽음 처리(롱폴링 응답 기준)
+    
     if (list != null && !list.isEmpty()) {
         long lastId = list.get(list.size()-1).getMsgId();
         dao.markRead(roomId, memberNo, lastId);

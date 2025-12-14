@@ -26,10 +26,10 @@ public class TimetableCrawler {
         CookieHandler.setDefault(cookieManager);
     }
 
-    /** 로그인 */
+    
     public boolean login(String username, String password) throws Exception {
 
-        // 1) login.php GET
+        
         Connection.Response loginPageRes = Jsoup.connect(LOGIN_PAGE)
                 .method(Connection.Method.GET)
                 .timeout(5000)
@@ -37,7 +37,7 @@ public class TimetableCrawler {
 
         cookies = loginPageRes.cookies();
 
-        // 2) POST 로그인
+        
         Connection.Response loginRes = Jsoup.connect(LOGIN_POST)
                 .cookies(cookies)
                 .data("username", username)
@@ -52,12 +52,12 @@ public class TimetableCrawler {
 
         Document doc = loginRes.parse();
 
-        // 실패 여부 확인
+        
         boolean fail = doc.select("body.notloggedin").size() > 0;
         return !fail;
     }
 
-    /** 강의 구조 */
+    
     public static class Lecture {
         public String title;
         public String professor;
@@ -80,7 +80,7 @@ public class TimetableCrawler {
         return Integer.parseInt(sp[0])*60 + Integer.parseInt(sp[1]);
     }
 
-    /** 시간표 크롤링 */
+    
     public List<Lecture> fetchTimetable() throws Exception {
 
         List<Lecture> list = new ArrayList<>();
@@ -99,38 +99,38 @@ public class TimetableCrawler {
 
             String prof = box.select("p.prof").text();
 
-            // ---------------------------
-            // ① 제목 추출
-            // ---------------------------
+            
+            
+            
             String title = raw;
             if (raw.contains("("))
                 title = raw.substring(0, raw.indexOf("(")).trim();
 
-            // ---------------------------
-            // ② 괄호 안 추출 (없으면 skip)
-            // ---------------------------
+            
+            
+            
             if (!raw.contains("(") || !raw.contains(")"))
-                continue; // 시간 정보 없는 강좌 → 건너뛰기
+                continue; 
 
             String inside = raw.substring(raw.indexOf("(") + 1, raw.indexOf(")")).trim();
 
-            // inside 예: "수 09:00-12:40"
-            // inside 예: "목"
-            // inside 예: "온라인"
-            // inside 예: ""DD
+            
+            
+            
+            
             if (inside.equals("") || inside.contains("온라인"))
-                continue; // 시간 없는 경우 skip
+                continue; 
 
             String[] parts = inside.split(" ");
 
             if (parts.length < 2)
-                continue; // "목" 이런 경우 skip
+                continue; 
 
-            String yoil = parts[0].trim();  // 요일
+            String yoil = parts[0].trim();  
 
             String[] times = parts[1].split("-");
             if (times.length < 2)
-                continue; // "09:00"만 있는 경우 skip
+                continue; 
 
             int day = parseDay(yoil);
             if (day == -1)
@@ -139,9 +139,9 @@ public class TimetableCrawler {
             int start = parseMin(times[0]);
             int end = parseMin(times[1]);
 
-            // ---------------------------
-            // ③ Lecture 객체 저장
-            // ---------------------------
+            
+            
+            
             Lecture L = new Lecture();
             L.title = title;
             L.professor = prof;

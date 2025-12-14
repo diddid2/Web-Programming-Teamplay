@@ -23,7 +23,7 @@
         return;
     }
 
-    // memberNo 보정
+    
     if (memberNo == null) {
         try (java.sql.Connection conn = util.DBUtil.getConnection();
              java.sql.PreparedStatement ps = conn.prepareStatement("SELECT MEMBER_NO FROM MEMBER WHERE USER_ID=?")) {
@@ -186,7 +186,7 @@
         );
     }
 
-    // postcodePopup.jsp에서 호출
+    
     function setCheckoutAddress(data) {
         document.getElementById("postcode").value = data.postcode || "";
         document.getElementById("address1").value = data.address1 || "";

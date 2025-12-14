@@ -22,16 +22,13 @@
 </head>
 <body>
 <%
-    Connection dbConn = null;          // java.sql.Connection
+    Connection dbConn = null;
     PreparedStatement pstmt = null;
 
     int successCount = 0;
     int failCount = 0;
 
     try {
-        // ============================
-        // 1. DB 연결
-        // ============================
         dbConn = DBUtil.getConnection();
 
         String sql =
@@ -48,9 +45,6 @@
 
         pstmt = dbConn.prepareStatement(sql);
 
-        // ============================
-        // 2. sbr1010.jsp 접속 → frameT 찾기
-        // ============================
         String rootUrl = "https://app.kangnam.ac.kr/knumis/sbr/sbr1010.jsp";
 
         Document rootDoc = Jsoup.connect(rootUrl)
@@ -67,9 +61,6 @@
         String frameTUrl = frameT.absUrl("src");
         out.println("<p>frameT URL: " + frameTUrl + "</p>");
 
-        // ============================
-        // 3. frameT 문서에서 frm1 폼 찾기
-        // ============================
         Document frameTDoc = Jsoup.connect(frameTUrl)
                 .userAgent("Mozilla/5.0")
                 .timeout(30_000)
@@ -87,12 +78,10 @@
 
         String method = form.hasAttr("method") ? form.attr("method").toUpperCase() : "GET";
 
-        // Jsoup HTTP 요청용 Connection (풀네임 사용해서 java.sql.Connection 과 헷갈리지 않게)
         org.jsoup.Connection jsoupConn = Jsoup.connect(actionUrl)
                 .userAgent("Mozilla/5.0")
                 .timeout(30_000);
 
-        // frm1 안의 input[name] 전부 data 로 세팅
         Elements inputs = form.select("input[name]");
         for (Element input : inputs) {
             String name  = input.attr("name");
@@ -100,7 +89,6 @@
             jsoupConn.data(name, value);
         }
 
-        // select[name] 의 선택된 값도 세팅
         Elements selects = form.select("select[name]");
         for (Element sel : selects) {
             String name = sel.attr("name");
@@ -109,10 +97,6 @@
             jsoupConn.data(name, value);
         }
 
-        // ============================
-        // 4. document.frm1.srch_gubn.value = "11"; frm1.submit();
-        //    효과: srch_gubn 파라미터를 11로 강제 세팅
-        // ============================
         jsoupConn.data("srch_gubn", "11");
 
         Document resultDoc;
@@ -122,10 +106,6 @@
             resultDoc = jsoupConn.get();
         }
 
-        // ============================
-        // 5. 실제 리스트가 들어있는 문서 찾기
-        //    (경우에 따라 resultDoc 안에 또 frameC 가 있을 수도 있음)
-        // ============================
         Document listDoc = resultDoc;
         Elements testRows = listDoc.select("div#list table tbody tr");
         if (testRows.isEmpty()) {
@@ -139,9 +119,6 @@
             }
         }
 
-        // ============================
-        // 6. div#list > table > tbody > tr 파싱
-        // ============================
         Elements rows = listDoc.select("div#list table tbody tr");
 
         if (rows.isEmpty()) {
@@ -151,10 +128,9 @@
 
             for (Element row : rows) {
                 Elements tds = row.select("td");
-                if (tds.size() < 7) continue;  // 최소 컬럼 수 확인
+                if (tds.size() < 7) continue;
 
                 try {
-                    // 순서: 학수번호 / 분반 / 과목명 / 담당교수 / 학점 / 시수 / 강의시간
                     String subjNumb      = tds.get(0).text().trim();
                     String classNo       = tds.get(1).text().trim();
                     String subjectName   = tds.get(2).text().trim();
@@ -168,11 +144,7 @@
                     try { credit = Integer.parseInt(creditStr); } catch (Exception ignore) {}
                     try { hours  = Integer.parseInt(hoursStr); }  catch (Exception ignore) {}
 
-                    // ============================
-                    // 7. onclick 의 value_set(...) 에서 링크용 파라미터 추출
-                    //    예: value_set('true','16','104029,2025,2,BB04101,04');
-                    // ============================
-                    String onclickAttr = tds.get(3).attr("onclick"); // 담당교수 td 의 onclick
+                    String onclickAttr = tds.get(3).attr("onclick");
 
                     String emplNumb = "";
                     String year     = "";
@@ -196,9 +168,6 @@
                     if (!subjFromOnclick.isEmpty())  subjNumb = subjFromOnclick;
                     if (!classFromOnclick.isEmpty()) classNo  = classFromOnclick;
 
-                    // ============================
-                    // 8. 강의계획서 링크 생성
-                    // ============================
                     String syllabusUrl = "";
                     if (!year.isEmpty() && !smst.isEmpty() && !subjNumb.isEmpty()
                             && !classNo.isEmpty() && !emplNumb.isEmpty()) {
@@ -214,9 +183,6 @@
                             "&winopt=1010";
                     }
 
-                    // ============================
-                    // 9. DB INSERT / UPDATE
-                    // ============================
                     pstmt.setString(1, subjNumb);
                     pstmt.setString(2, classNo);
                     pstmt.setString(3, subjectName);

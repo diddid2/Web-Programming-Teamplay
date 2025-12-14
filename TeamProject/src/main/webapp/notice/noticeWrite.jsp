@@ -2,7 +2,7 @@
 <%
     request.setCharacterEncoding("UTF-8");
 
-    // GNB에 현재 탭 표시
+    
     request.setAttribute("currentMenu", "notice");
 
     String ctx = request.getContextPath();
@@ -144,7 +144,7 @@
         </div>
     </div>
 
-    <!-- 공지 등록 처리 -->
+    
     <form class="write-form" action="<%= ctx %>/notice/noticeWriteProc.jsp" method="post">
         <label for="title">제목</label>
         <input type="text" id="title" name="title" maxlength="200" required

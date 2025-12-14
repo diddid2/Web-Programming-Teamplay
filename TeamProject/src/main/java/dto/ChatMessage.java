@@ -5,9 +5,9 @@ import java.sql.Timestamp;
 public class ChatMessage {
     private long msgId;
     private long roomId;
-    // senderId: 시스템 메시지의 경우 NULL
+    
     private Integer senderId;
-    // USER / SYSTEM
+    
     private String messageType;
     private String message;
     private Timestamp createdAt;

@@ -6,14 +6,14 @@
 <%
     request.setCharacterEncoding("UTF-8");
 
-    // 1) 로그인 확인
+    
     String userId = (String)session.getAttribute("userId");
     if (userId == null) {
         out.println("<script>alert('로그인이 필요합니다.'); location.href='../login.jsp';</script>");
         return; 
     } 
 
-    // 2) DB에서 e캠퍼스 계정 로드
+    
     String ecId = null;
     String ecPw = null;
 
@@ -36,7 +36,7 @@
         return;
     }
 
-    // 3) 크롤러 실행
+    
     TimetableCrawler crawler = new TimetableCrawler();
     boolean ok = crawler.login(ecId, ecPw);
 
@@ -48,19 +48,19 @@
     List<TimetableCrawler.Lecture> list = crawler.fetchTimetable();
 
 
-    // 4) USER_TIMETABLE 에 저장
+    
     int insertCount = 0;
 
     try (Connection conn = DBUtil.getConnection()) { 
 
-        // (1) 기존 데이터 전체 삭제
+        
         try (PreparedStatement del = conn.prepareStatement(
             "DELETE FROM USER_TIMETABLE WHERE USER_ID = ?")) {
             del.setString(1, userId);
             del.executeUpdate();
         }
 
-        // (2) 새 기록 INSERT
+        
         String sql =
             "INSERT INTO USER_TIMETABLE " +
             "(USER_ID, TITLE, PROFESSOR, DAY, START_MIN, END_MIN, UPDATED_AT) " +
@@ -84,6 +84,6 @@
         return;
     } 
 
-    // 5) 완료 메시지 후 메인으로 이동
+    
     out.println("<script>alert('시간표 동기화 완료! (" + insertCount + "개)'); location.href='../timetable/timetableMain.jsp';</script>");
 %>

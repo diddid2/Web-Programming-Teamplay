@@ -9,7 +9,7 @@
     }
 
     int postNo = Integer.parseInt(request.getParameter("postNo"));
-    String referer = request.getHeader("Referer"); // 원래 페이지로 돌아가려는 용도
+    String referer = request.getHeader("Referer"); 
 
     Connection conn = null;
     PreparedStatement pstmt = null;
@@ -18,7 +18,7 @@
     try {
         conn = DBUtil.getConnection();
 
-        // 이미 공감했는지 확인
+        
         String checkSql = "SELECT 1 FROM BOARD_LIKE WHERE POST_NO = ? AND USER_ID = ?";
         pstmt = conn.prepareStatement(checkSql);
         pstmt.setInt(1, postNo);
@@ -30,7 +30,7 @@
         pstmt.close();
 
         if (alreadyLiked) {
-            // 공감 취소
+            
             String delSql = "DELETE FROM BOARD_LIKE WHERE POST_NO = ? AND USER_ID = ?";
             pstmt = conn.prepareStatement(delSql);
             pstmt.setInt(1, postNo);
@@ -43,7 +43,7 @@
             pstmt.setInt(1, postNo);
             pstmt.executeUpdate();
         } else {
-            // 공감 등록
+            
             String insSql = "INSERT INTO BOARD_LIKE (POST_NO, USER_ID) VALUES (?, ?)";
             pstmt = conn.prepareStatement(insSql);
             pstmt.setInt(1, postNo);

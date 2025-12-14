@@ -8,22 +8,22 @@ public class MarketItem {
     private String title;
     private String category;
     private int price;
-    private String status;       // ON_SALE / RESERVED / SOLD_OUT
+    private String status;       
     private String campus;
     private String meetingPlace;
     private String meetingTime;
-    private String tradeType;    // DIRECT / DELIVERY / BOTH
+    private String tradeType;    
     private int wishCount;
     private int chatCount;
     private String thumbnailUrl;
     private String description;
-    private Integer writerId;    // 로그인 유저 PK (nullable)
+    private Integer writerId;    
 
-    // === instant buy (바로구매) ===
-    // market_item.instant_buy : TINYINT(1)
+    
+    
     private boolean instantBuy;
 
-    // 판매 완료 시점 기록(선택)
+    
     private Integer buyerId;
     private Timestamp soldAt;
 

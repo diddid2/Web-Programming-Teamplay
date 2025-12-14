@@ -56,7 +56,7 @@
             margin-top:2px;
         }
 
-        /* 시간표 토글 버튼 */
+        
         .tab-buttons {
             display:inline-flex;
             gap:4px;
@@ -80,7 +80,7 @@
             font-weight:600;
         }
 
-        /* 출발점 선택 버튼 */
+        
         .depart-buttons {
             display:inline-flex;
             gap:4px;
@@ -117,7 +117,7 @@
             overflow:hidden;
             background:#020617;
             border:1px solid #111827;
-            position:relative; /* 오버레이 박스를 위해 필요 */
+            position:relative; 
         }
         .timetable-wrap img {
             display:block;
@@ -130,7 +130,7 @@
             color:#9ca3af;
         }
 
-        /* 다음 달구지 오버레이 박스 */
+        
         .next-bus-box {
             position:absolute;
             top:12px;
@@ -161,7 +161,7 @@
             margin-top:2px;
         }
 
-        /* 지도 영역 */
+        
         .map-frame {
             width:100%;
             height:320px;
@@ -181,9 +181,9 @@
         }
     </style>
     <script>
-        /* =========================================
-         *  탭(월·금 / 화·수·목) 이미지 토글
-         * ========================================= */
+        
+
+
         function showTimetable(type) {
             var monFriImg = document.getElementById('tt-monfri');
             var tueThuImg = document.getElementById('tt-twt');
@@ -205,38 +205,38 @@
                 currentDayType = 'TUE_WED_THU';
             }
 
-            updateNextBus(); // 요일 탭 바뀌면 다시 계산
+            updateNextBus(); 
         }
 
-        /* =========================================
-         *  달구지 시간표 데이터
-         *  - 각 배열은 "HH:MM" 형식 (24시간제)
-         *  - 네 군데에 네 줄씩 시간 직접 입력해서 쓰면 됨
-         * ========================================= */
+        
 
-        // 월·금 기준
-        var timesMonFri_EE = [ // 이공관 출발 기준 월·금
+
+
+
+
+        
+        var timesMonFri_EE = [ 
             "10:40", "11:00", "11:10", "11:20", "11:30", "11:50", "13:00", "13:20", "14:00", "14:10", "14:20", "14:30", "17:30", "17:50"
         ];
-        var timesMonFri_GI = [ // 기흥역 출발 기준 월·금
+        var timesMonFri_GI = [ 
             "10:30", "10:50", "11:00", "11:10", "11:20", "11:30", "12:50", "13:10", "13:40", "14:00", "14:10", "14:20", "17:00", "17:20"
         ];
 
-        // 화·수·목 기준
-        var timesTwt_EE = [   // 이공관 출발 기준 화·수·목
+        
+        var timesTwt_EE = [   
             "10:40", "10:50", "11:00", "11:10", "11:20", "11:30", "11:50", "13:00", "13:20", "13:40", "13:50", "14:00", "14:10", "14:20", "14:30", "14:40", "15:30", "16:30", "17:30", "17:50"
         ];
-        var timesTwt_GI = [   // 기흥역 출발 기준 화·수·목
+        var timesTwt_GI = [   
         	"10:30", "10:40", "10:50", "11:00", "11:10", "11:20", "11:30", "12:50", "13:10", "13:30", "13:40", "13:50", "14:00", "14:10", "14:20", "14:30", "15:00", "16:00", "17:00", "17:20"
         ];
 
-        // 현재 선택 상태
-        var currentDayType = 'MON_FRI'; // 'MON_FRI' 또는 'TUE_WED_THU'
-        var currentDepart = 'EE';       // 'EE' (이공관), 'GI' (기흥역)
+        
+        var currentDayType = 'MON_FRI'; 
+        var currentDepart = 'EE';       
 
-        /* =========================================
-         *  공통 유틸
-         * ========================================= */
+        
+
+
         function toMin(t) {
             var parts = t.split(":");
             var h = parseInt(parts[0], 10);
@@ -256,7 +256,7 @@
                     return { time: t, diffMin: mins - nowMin };
                 }
             }
-            return null; // 오늘 운행 종료
+            return null; 
         }
 
         function formatRemain(sec) {
@@ -274,9 +274,9 @@
             }
         }
 
-        /* =========================================
-         *  메인 갱신 함수 (다음 도착시간 / 남은시간)
-         * ========================================= */
+        
+
+
         function updateNextBus() {
             var schedule = getCurrentScheduleArray();
             var box = document.getElementById("next-bus-box");
@@ -301,7 +301,7 @@
 
             timeEl.textContent = next.time;
 
-            // 초 단위 카운트다운
+            
             var nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
             var targetSec = toMin(next.time) * 60;
             var diffSec = targetSec - nowSec;
@@ -311,11 +311,11 @@
             subEl.textContent = departLabel + " " + dayLabel + " 기준 다음 달구지 예상 도착시간입니다.";
         }
 
-        /* =========================================
-         *  출발점 선택 버튼
-         * ========================================= */
+        
+
+
         function setDepart(type) {
-            currentDepart = type; // 'EE' or 'GI'
+            currentDepart = type; 
 
             var btnEE = document.getElementById("btn-depart-ee");
             var btnGI = document.getElementById("btn-depart-gi");
@@ -333,13 +333,13 @@
             updateNextBus();
         }
 
-        /* =========================================
-         *  초기 설정
-         * ========================================= */
+        
+
+
         window.addEventListener('DOMContentLoaded', function () {
-            // 요일 기준 기본 탭 선택
+            
             var now = new Date();
-            var day = now.getDay(); // 0:일 ~ 6:토
+            var day = now.getDay(); 
 
             if (day === 2 || day === 3 || day === 4) {
                 currentDayType = 'TUE_WED_THU';
@@ -349,10 +349,10 @@
                 showTimetable('MON_FRI');
             }
 
-            // 기본 출발점: 이공관
+            
             setDepart('EE');
 
-            // 1초마다 카운트다운 갱신
+            
             setInterval(updateNextBus, 1000);
         });
     </script>
@@ -362,7 +362,7 @@
 <jsp:include page="/common/gnb.jsp" />
 
 <main>
-    <!-- 왼쪽: 달구지 시간표 -->
+    
     <section class="card">
         <div class="card-header">
             <div>
@@ -394,7 +394,7 @@
         </div>
 
         <div class="timetable-wrap">
-            <!-- 다음 달구지 정보 오버레이 -->
+            
             <div id="next-bus-box" class="next-bus-box">
                 <div class="next-bus-main">
                     다음 달구지 <span id="next-time" class="next-bus-time">--:--</span>
@@ -405,7 +405,7 @@
                 </div>
             </div>
 
-            <!-- 실제 이미지 경로는 프로젝트에 맞게 수정 -->
+            
             <img id="tt-monfri"
                  src="<%= ctx %>/resources/dalguji/dalguji_mon_fri.png"
                  alt="달구지 시간표 - 월·금">
@@ -420,7 +420,7 @@
         </div>
     </section>
 
-    <!-- 오른쪽: 달구지 실시간 위치 (베타) -->
+    
     <section class="card">
         <div class="card-header">
             <div>
@@ -430,12 +430,12 @@
                 </div>
             </div>
         </div>
-        <!--
-            실전으로는 Ubikhan의 내부 위치 API를 파싱해서
-            카카오/네이버 지도에 마커를 찍는 구조로 가야 하는데,
-            우선은 map 페이지를 그대로 iframe으로 띄우는 버전으로 구현.
-            (브라우저에서 한 번 로그인하면 세션 유지됨)
-        -->
+        
+
+
+
+
+
         <div id="dalgujiMap" class="map-frame"></div>
         <iframe class="map-frame"
                 title="달구지 실시간 위치"
@@ -446,7 +446,7 @@
             · 최초 접속 시 유비칸 계정으로 한 번 로그인해야 지도가 표시됩니다.
         </div> 
     </section>
-    <!-- 카카오 지도 -->
+    
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f1ec7760d278bac11590865e12b2469d&libraries=clusterer"></script>
 
 <script>
@@ -479,12 +479,12 @@ function updateShuttle() {
                 const icon   = car.cariconurl;
 
                 if (markers[name]) {
-                    // 기존 마커 위치만 이동
+                    
                     markers[name].setPosition(new kakao.maps.LatLng(lat, lon));
                     return;
                 }
 
-                // 새 마커 생성
+                
                 let img = new kakao.maps.MarkerImage(
                     "https://new.ubikhan.com/resources/marker/" + icon,
                     new kakao.maps.Size(40, 40)
@@ -519,8 +519,8 @@ function updateShuttle() {
 
 window.addEventListener("DOMContentLoaded", () => {
     initMap();
-    updateShuttle();               // 최초 1회
-    setInterval(updateShuttle, 3000); // 3초마다 업데이트V
+    updateShuttle();               
+    setInterval(updateShuttle, 3000); 
 });
 </script>
     

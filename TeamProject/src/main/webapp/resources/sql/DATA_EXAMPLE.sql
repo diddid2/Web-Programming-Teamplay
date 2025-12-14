@@ -134,3 +134,100 @@ VALUES
 ('무역영어 팝니다.', '교재 · 전공책', 6000, 'ON_SALE', '강남대 정문', '정문', '평일 점심', 'DIRECT', 0, 0, 'resources/MarketThumbnails/sample30.jpg',
  '단어 체크 흔적 조금 있어요.\n공부 시작하시는 분 가져가세요!',
  (SELECT MEMBER_NO FROM member WHERE USER_ID='user04' LIMIT 1), 0);
+
+ INSERT INTO BOARD_POST (USER_ID, TITLE, CONTENT)
+VALUES
+('user02', '본인이 휴학생이라 그러는데', '오늘이 마지막 날임?
+대부분 종강함?'),
+('user05', '팀플', '팀플 첨인데 어렵나요?'),
+('user01', '과제 제출 방식 뭐로 함', '한글로 올리려는데 ㄱㅊ?'),
+('user09', '주말 스터디 모집합니다', '이번 주말에 도서관에서 같이 공부하실 분 구해요. 2~3시간 정도 생각 중입니다.'),
+('user04', '출석/지각 기준 질문', '지각 몇 분부터 지각 처리되는지, 결석 기준이 어떻게 되는지 궁금합니다.'),
+('user07', '한상진 교수님 웹 프로그래밍 강의 어떤가요??', '다음 학기때 한상진 교수님 웹프 수강하려는데 어떤가요 수강해보신 분 계신가요.'),
+('user03', '중간고사 범위 예상', '중간고사 범위가 대략 1~6주차라는데, 연습문제 중 우선순위로 볼 파트가 있을까요?');
+
+
+INSERT INTO BOARD_COMMENT (POST_NO, USER_ID, CONTENT)
+VALUES
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='본인이 휴학생이라 그러는데' LIMIT 1), 'user06', '오늘이 마지막 날이면 보통 기말고사/과제 마감 몰려있을 듯 ㅋㅋ'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='본인이 휴학생이라 그러는데' LIMIT 1), 'user08', '과마다 달라요. 어떤 과목은 이미 종강했고 어떤 과목은 보강도 있음.'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='본인이 휴학생이라 그러는데' LIMIT 1), 'user01', '대부분 종강 느낌인데 시험 남은 과목도 있더라'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='팀플' LIMIT 1), 'user02', '처음이면 역할 분담만 잘해도 반은 먹고 들어감'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='팀플' LIMIT 1), 'user07', '어렵다기보단 일정 관리가 제일 빡셈… 중간에 잠수타는 사람 나오면 지옥'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='팀플' LIMIT 1), 'user09', '팀장 잡히면 좀 피곤한데 대신 점수는 안정적임'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='과제 제출 방식 뭐로 함' LIMIT 1), 'user04', '한글 괜찮을 듯? 근데 교수님이 PDF 선호하실 수도'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='과제 제출 방식 뭐로 함' LIMIT 1), 'user03', '깨질 때 있어서 PDF로 저장해서 올리는 게 안전함'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='과제 제출 방식 뭐로 함' LIMIT 1), 'user05', '저는 보통 한글로 쓰고 PDF로 변환해서 제출함'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='주말 스터디 모집합니다' LIMIT 1), 'user01', '저 관심 있어요! 토/일 중에 어느 날 생각하세요?'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='주말 스터디 모집합니다' LIMIT 1), 'user02', '시간대랑 장소 정해지면 알려주세요'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='주말 스터디 모집합니다' LIMIT 1), 'user06', '도서관 자리 없으면 근처 스카도 ㄱㄴ'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='출석/지각 기준 질문' LIMIT 1), 'user08', '수업마다 다르긴 한데 보통 10분 넘어가면 지각으로 치는 곳 많음'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='출석/지각 기준 질문' LIMIT 1), 'user05', '출석 공지 확인해보면 적혀있을 수도 있어요'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='출석/지각 기준 질문' LIMIT 1), 'user09', '저도 헷갈림… 공지로 정리되면 좋겠다'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='한상진 교수님 웹 프로그래밍 강의 어떤가요??' LIMIT 1), 'user04', '나 찐따인데 교수님이 팀플 팀원 잡아주심 팀플 걱정 ㄴㄴ'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='한상진 교수님 웹 프로그래밍 강의 어떤가요??' LIMIT 1), 'user02', '기말에 팀플이 있는데 듣기 괜찮음'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='한상진 교수님 웹 프로그래밍 강의 어떤가요??' LIMIT 1), 'user07', '아주 배우기 쉽습니다.'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='중간고사 범위 예상' LIMIT 1), 'user01', '연습문제에서 자주 나오는 유형 위주로 보면 좋을 듯'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='중간고사 범위 예상' LIMIT 1), 'user06', '조인/정규화 이런 파트는 거의 필수로 나오는 느낌'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='중간고사 범위 예상' LIMIT 1), 'user03', '과제했던 코드 흐름 이해하고 가면 점수 잘 나옴');
+
+INSERT IGNORE INTO BOARD_LIKE (POST_NO, USER_ID)
+VALUES
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='본인이 휴학생이라 그러는데' LIMIT 1), 'user01'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='본인이 휴학생이라 그러는데' LIMIT 1), 'user06'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='본인이 휴학생이라 그러는데' LIMIT 1), 'user08'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='팀플' LIMIT 1), 'user02'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='팀플' LIMIT 1), 'user07'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='팀플' LIMIT 1), 'user09'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='과제 제출 방식 뭐로 함' LIMIT 1), 'user03'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='과제 제출 방식 뭐로 함' LIMIT 1), 'user05'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='주말 스터디 모집합니다' LIMIT 1), 'user01'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='주말 스터디 모집합니다' LIMIT 1), 'user02'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='주말 스터디 모집합니다' LIMIT 1), 'user06'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='출석/지각 기준 질문' LIMIT 1), 'user05'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='출석/지각 기준 질문' LIMIT 1), 'user08'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='한상진 교수님 웹 프로그래밍 강의 어떤가요??' LIMIT 1), 'user02'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='한상진 교수님 웹 프로그래밍 강의 어떤가요??' LIMIT 1), 'user04'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='한상진 교수님 웹 프로그래밍 강의 어떤가요??' LIMIT 1), 'user09'),
+
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='중간고사 범위 예상' LIMIT 1), 'user01'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='중간고사 범위 예상' LIMIT 1), 'user06');
+
+
+INSERT IGNORE INTO BOARD_SCRAP (POST_NO, USER_ID)
+VALUES
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='본인이 휴학생이라 그러는데' LIMIT 1), 'user04'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='팀플' LIMIT 1), 'user01'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='팀플' LIMIT 1), 'user06'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='과제 제출 방식 뭐로 함' LIMIT 1), 'user02'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='주말 스터디 모집합니다' LIMIT 1), 'user03'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='출석/지각 기준 질문' LIMIT 1), 'user07'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='한상진 교수님 웹 프로그래밍 강의 어떤가요??' LIMIT 1), 'user05'),
+((SELECT POST_NO FROM BOARD_POST WHERE TITLE='중간고사 범위 예상' LIMIT 1), 'user08');
+
+
+UPDATE BOARD_POST p
+SET
+  COMMENT_COUNT = (SELECT COUNT(*) FROM BOARD_COMMENT c WHERE c.POST_NO = p.POST_NO),
+  LIKE_COUNT    = (SELECT COUNT(*) FROM BOARD_LIKE l   WHERE l.POST_NO = p.POST_NO),
+  SCRAP_COUNT   = (SELECT COUNT(*) FROM BOARD_SCRAP s  WHERE s.POST_NO = p.POST_NO);
+
+
+INSERT INTO BOARD_NOTICE (USER_ID, TITLE, CONTENT)
+VALUES
+('admin', 'KangnamTime 시연 안내', '교수님 시연용으로 게시글/댓글/공감/스크랩 샘플 데이터가 포함되어 있습니다.\n기본 계정: admin, user01~user09'),
+('admin', '게시판 이용 규칙', '비방/욕설/광고/개인정보 노출 글은 삭제될 수 있습니다.\n서로 예의 지켜주세요.'),
+('admin', '중고거래 안전거래 안내', '직거래는 사람이 많은 곳에서 진행 권장.\n연락처/계좌 등 개인정보 공유는 주의해주세요.'),
+('admin', '과제 캘린더 기능 안내', '과제 등록 후 마감일(D-DAY) 확인이 가능합니다.\n우선순위/상태도 함께 관리해보세요.');
+

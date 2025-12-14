@@ -8,7 +8,7 @@
 
     int unreadTotal = 0;
     if (userId != null) {
-        // memberNo가 없으면 보정 (GNB 배지 계산용)
+        
         if (memberNo == null) {
             try (java.sql.Connection conn = util.DBUtil.getConnection();
                  java.sql.PreparedStatement ps = conn.prepareStatement("SELECT MEMBER_NO FROM MEMBER WHERE USER_ID=?")) {
@@ -53,7 +53,7 @@
         justify-content: space-between;
     }
 
-    /* 왼쪽 로고 */
+    
     .gnb-left {
         display: flex;
         align-items: center;
@@ -77,7 +77,7 @@
         color: #e5e7eb;
     }
 
-    /* 가운데 탭 메뉴 */
+    
     .gnb-center {
         display: flex;
         align-items: center;
@@ -95,7 +95,7 @@
         color: #ffffff;
     }
 
-    /* 밑줄 효과 */
+    
     .gnb-center a::after {
         content: "";
         position: absolute;
@@ -120,7 +120,7 @@
         height: 2px;
     }
 
-    /* 오른쪽 계정 영역 */
+    
     .gnb-right {
         display: flex;
         align-items: center;
@@ -203,13 +203,13 @@
 <header class="gnb-header">
     <div class="gnb-inner">
 
-        <!-- 왼쪽: 로고 -->
+        
         <div class="gnb-left" onclick="location.href='<%= ctx %>/main.jsp'">
             <div class="gnb-logo-mark">KT</div>
             <div class="gnb-logo-text">강남타임</div>
         </div>
 
-        <!-- 가운데: 탭 메뉴 -->
+        
         <nav class="gnb-center">
             <a href="<%= ctx %>/main.jsp"
                class="<%= "home".equals(currentMenu) ? "gnb-active" : "" %>">홈</a>
@@ -233,7 +233,7 @@
                class="<%= "settings".equals(currentMenu) ? "gnb-active" : "" %>">설정</a>
         </nav>
 
-        <!-- 오른쪽: 로그인/회원정보 -->
+        
         <div class="gnb-right">
             <div class="gnb-icon-wrap">
                 <button class="gnb-icon-btn" title="채팅" onclick="location.href='<%= ctx %>/market/chatList.jsp'">

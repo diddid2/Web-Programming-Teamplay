@@ -19,7 +19,7 @@
     String loginUser = (String) session.getAttribute("userId");
     String ctx       = request.getContextPath();
 
-    // ✅ 공지 파라미터는 noticeNo로 통일
+    
     String noticeNoStr = request.getParameter("noticeNo");
     if (noticeNoStr == null) {
         out.println("<script>alert('잘못된 접근입니다.'); location.href='" + ctx + "/notice/noticeMain.jsp';</script>");
@@ -47,14 +47,14 @@
     try {
         conn = DBUtil.getConnection();
 
-        // ✅ 1) 조회수 증가 (공지 테이블)
+        
         String hitSql = "UPDATE BOARD_NOTICE SET HIT = HIT + 1 WHERE NOTICE_NO = ?";
         pstmt = conn.prepareStatement(hitSql);
         pstmt.setInt(1, noticeNo);
         pstmt.executeUpdate();
         pstmt.close();
 
-        // ✅ 2) 공지 정보 조회
+        
         String sql =
             "SELECT TITLE, CONTENT, USER_ID, HIT, " +
             "       DATE_FORMAT(CREATED_AT, '%Y-%m-%d') AS CREATED_AT " +
@@ -83,7 +83,7 @@
         try { if (conn != null) conn.close(); } catch (Exception ex) {}
     }
 
-    // ✅ 내용 줄바꿈 처리 (기존 유지)
+    
     if (content != null) {
         content = content.replace("\r\n", "<br>").replace("\n", "<br>");
     }

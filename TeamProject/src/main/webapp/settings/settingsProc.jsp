@@ -23,7 +23,7 @@
     try {
         conn = DBUtil.getConnection();
 
-        // 먼저 UPDATE 시도
+        
         String updateSql =
             "UPDATE USER_INTEGRATION " +
             "SET EVERYTIME_ID = ?, EVERYTIME_PW = ?, " +
@@ -44,7 +44,7 @@
         int updated = pstmt.executeUpdate();
         pstmt.close();
 
-        // UPDATE가 0행이면 -> 아직 USER_INTEGRATION에 이 사용자 데이터가 없다 → INSERT
+        
         if (updated == 0) {
             String insertSql =
                 "INSERT INTO USER_INTEGRATION " +

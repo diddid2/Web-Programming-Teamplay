@@ -1,5 +1,5 @@
--- 강남마켓 채팅 테이블 (MySQL)
--- 실행 전: market_item(id), MEMBER(MEMBER_NO) 존재 가정
+
+
 
 CREATE TABLE IF NOT EXISTS market_chat_room (
     room_id     BIGINT AUTO_INCREMENT PRIMARY KEY,

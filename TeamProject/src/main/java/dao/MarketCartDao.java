@@ -15,7 +15,7 @@ public class MarketCartDao {
         String sql =
                 "INSERT INTO market_cart (member_no, item_id, cart_type, quantity) " +
                 "VALUES (?, ?, ?, 1) " +
-                // 중고거래 특성상 '스택'은 최대 1개만 유지
+                
                 "ON DUPLICATE KEY UPDATE quantity = 1";
 
         try (Connection conn = DBUtil.getConnection();
@@ -23,7 +23,7 @@ public class MarketCartDao {
             ps.setInt(1, memberNo);
             ps.setLong(2, itemId);
             ps.setString(3, cartType);
-            ps.executeUpdate(); // already-in-cart(0 rows)도 성공으로 취급
+            ps.executeUpdate(); 
             return true;
         } catch (Exception e) {
             e.printStackTrace();

@@ -8,11 +8,11 @@ public class MarketOrder {
     private int sellerId;
     private int buyerId;
     private int price;
-    private String status; // PAID / SHIPPED / DELIVERED / CANCELLED
+    private String status; 
     private String carrier;
     private String trackingNumber;
 
-    // 배송지(즉시구매=택배 전용)
+    
     private String recipientName;
     private String phone;
     private String postcode;

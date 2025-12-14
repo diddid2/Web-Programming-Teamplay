@@ -85,7 +85,7 @@ public String esc(String s) {
 
     boolean isSeller = room.isSeller(memberNo);
 
-    // 즉시구매(택배) 주문이 존재하면, 채팅 상단에 진행상황 UI를 띄웁니다.
+    
     MarketOrderDao orderDao = new MarketOrderDao();
     MarketOrder order = orderDao.findByRoom(roomId);
     boolean hasOrder = (order != null);
@@ -101,7 +101,7 @@ public String esc(String s) {
 
     long lastMsgId = 0;
     if (messages != null && !messages.isEmpty()) lastMsgId = messages.get(messages.size()-1).getMsgId();
-    // 초기 진입 시점에 읽음 처리
+    
     if (lastMsgId > 0) chatDao.markRead(roomId, memberNo, lastMsgId);
 %>
 <!DOCTYPE html>
@@ -424,12 +424,12 @@ public String esc(String s) {
 	async function longPoll() {
 	    while (!stopped) {
 	        try {
-	            // wait=1 : 서버가 새 메시지 생길 때까지(최대 25초) 기다렸다가 응답
+	            
 	            const url = "<%=ctx%>/market/chatMessages.jsp"
 	                      + "?roomId=<%=room.getRoomId()%>"
 	                      + "&after=" + lastMsgId
 	                      + "&wait=1"
-	                      + "&t=" + Date.now(); // 캐시 방지
+	                      + "&t=" + Date.now(); 
 	
 	            const res = await fetch(url, { cache: "no-store" });
 	            if (!res.ok) continue;
@@ -437,7 +437,7 @@ public String esc(String s) {
 	            const data = await res.json();
 	            appendMessages(data);
 	        } catch (e) {
-	            // 네트워크 순간 끊김 대비: 잠깐 쉬고 재연결
+	            
 	            await new Promise(r => setTimeout(r, 800));
 	        }
 	    }

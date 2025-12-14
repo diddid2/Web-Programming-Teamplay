@@ -73,13 +73,13 @@
             instantOnly
     );
 
-    int todayCount = totalCount; // 현재 조건에 해당하는 전체 개수
+    int todayCount = totalCount; 
     int onSaleCount = 0;
     for (MarketItem mi : items) {
         if ("ON_SALE".equalsIgnoreCase(mi.getStatus())) onSaleCount++;
     }
 
-    // ===== 내 거래현황(로그인 연동) =====
+    
     String userName = (String) session.getAttribute("userName");
     Integer memberNo = (Integer) session.getAttribute("memberNo");
 
@@ -88,7 +88,7 @@
     int mySoldCount = 0;
 
     if (userId != null) {
-        // memberNo가 세션에 없으면 MEMBER 테이블에서 조회
+        
         if (memberNo == null) {
             String sqlMem = "SELECT MEMBER_NO FROM MEMBER WHERE USER_ID=?";
             try (Connection conn = DBUtil.getConnection();
@@ -112,7 +112,7 @@
         }
     }
 
-    // ===== 페이징 링크용 쿼리 =====
+    
     String pageUrlPrefix = ctx + "/market/marketMain.jsp?"
             + "keyword=" + enc(keyword)
             + "&category=" + enc(category)
@@ -130,13 +130,13 @@
     <title>KangnamTime – 중고거래</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- 폰트 -->
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* 네가 준 CSS 그대로 (생략 없이 붙이기) */
+        
         * {
             box-sizing: border-box;
             margin: 0;
@@ -836,7 +836,7 @@
         </div>
     </section>
 
-    <!-- 검색 / 필터 카드 -->
+    
     <section class="card search-card">
         <div class="card-header">
             <div>
@@ -894,10 +894,10 @@
         </form>
     </section>
 
-    <!-- 메인 컨텐츠 그리드 -->
+    
     <section class="content-grid">
 
-        <!-- 상품 리스트 -->
+        
         <section class="card product-list-card">
             <div class="card-header">
                 <div>
@@ -1016,7 +1016,7 @@
                 %>
             </div>
 
-            <%-- 페이지네이션 --%>
+            
             <% if (totalPages > 1) {
                 int startPage = Math.max(1, pageNo - 2);
                 int endPage = Math.min(totalPages, startPage + 4);
@@ -1035,7 +1035,7 @@
             <% } %>
         </section>
 
-        <!-- 오른쪽 사이드 영역 -->
+        
         <aside>
             <section class="card side-card">
                 <div class="card-header">

@@ -4,10 +4,10 @@ public class CartItem {
     private long cartId;
     private int memberNo;
     private long itemId;
-    private String cartType; // IMMEDIATE / DELIVERY
+    private String cartType; 
     private int quantity;
 
-    // market item snapshot (join)
+    
     private String title;
     private int price;
     private String thumbnailUrl;

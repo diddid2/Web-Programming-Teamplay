@@ -32,7 +32,7 @@
 
         int cnt = pstmt.executeUpdate();
         if (cnt == 1) {
-            // 세션에 저장된 이름도 같이 갱신 (있다면)
+            
             session.setAttribute("userName", name.trim());
             out.println("<script>alert('프로필이 수정되었습니다.'); location.href='mypage.jsp';</script>");
         } else {

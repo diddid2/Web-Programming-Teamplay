@@ -32,7 +32,7 @@
         return;
     }
 
-    // memberNo 보정
+    
     if (memberNo == null) {
         try (Connection conn = util.DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement("SELECT MEMBER_NO FROM MEMBER WHERE USER_ID=?")) {
@@ -51,7 +51,7 @@
         return;
     }
 
-    // 수정 모드
+    
     boolean editMode = false;
     long editItemId = 0;
     MarketItem editItem = null;
@@ -211,7 +211,7 @@
             <% } %>
 
             <div class="grid">
-                <!-- 왼쪽 폼 -->
+                
                 <div>
                     <label>제목 <span style="color:#fca5a5;">*</span></label>
                     <input type="text" name="title" maxlength="100" required value="<%=vTitle%>" placeholder="예) 운영체제 전공책(상태좋음)"/>
@@ -288,9 +288,9 @@
                     <textarea name="description" placeholder="상태, 구성품, 하자 여부, 거래 희망사항 등을 적어주세요."><%=vDesc%></textarea>
                 </div>
 
-                <!-- 오른쪽 썸네일 -->
+                
                 <div class="thumbbox">
-                    <div class="thumb">
+                    <div class="thumb" id="thumbBox">
                         <% if (thumbUrl != null) { %>
                             <img src="<%=thumbUrl%>" alt="현재 썸네일"/>
                         <% } else { %>
@@ -298,7 +298,7 @@
                         <% } %>
                     </div>
                     <label>썸네일 이미지</label>
-                    <input type="file" name="thumbnail" accept="image/*"/>
+                    <input type="file" id="thumbInput" name="thumbnail" accept="image/*"/>
                     <div class="help">
                         업로드된 파일은 <code>webapp/resources/MarketThumbnail</code> 경로로 저장됩니다.<br/>
                         <% if (editMode) { %>새 이미지를 업로드하면 기존 썸네일이 교체됩니다.<% } else { %>이미지는 선택사항입니다.<% } %>
@@ -320,6 +320,44 @@
         </form>
     </section>
 </main>
+
+<script>
+  
+  (function () {
+    var input = document.getElementById('thumbInput');
+    var box = document.getElementById('thumbBox');
+    if (!input || !box) return;
+
+    
+    var originalHTML = box.innerHTML;
+
+    input.addEventListener('change', function () {
+      var file = input.files && input.files[0];
+      if (!file) {
+        box.innerHTML = originalHTML;
+        return;
+      }
+
+      if (!file.type || file.type.indexOf('image/') !== 0) {
+        alert('이미지 파일만 업로드할 수 있어요.');
+        input.value = '';
+        box.innerHTML = originalHTML;
+        return;
+      }
+
+      var img = document.createElement('img');
+      img.alt = '썸네일 미리보기';
+      var url = URL.createObjectURL(file);
+      img.onload = function () {
+        try { URL.revokeObjectURL(url); } catch (e) {}
+      };
+      img.src = url;
+
+      box.innerHTML = '';
+      box.appendChild(img);
+    });
+  })();
+</script>
 
 </body>
 </html>

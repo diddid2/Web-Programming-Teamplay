@@ -9,9 +9,9 @@ import util.DBUtil;
 
 public class MarketItemDao {
 
-    /**
-     * 검색/필터 목록 개수(페이징용)
-     */
+    
+
+
     public int countByFilter(
             String keyword,
             String category,
@@ -74,9 +74,9 @@ public class MarketItemDao {
         return 0;
     }
 
-    /**
-     * 검색/필터/정렬 목록 조회(페이징)
-     */
+    
+
+
     public List<MarketItem> findByFilterPaged(
             String keyword,
             String category,
@@ -160,10 +160,10 @@ public class MarketItemDao {
         return list;
     }
 
-    /**
-     * 글 등록 (INSERT)
-     * @return 생성된 PK(id)를 리턴, 실패하면 -1
-     */
+    
+
+
+
     public long insert(MarketItem item) {
         String sql = "INSERT INTO market_item " +
                 "(title, category, price, status, campus, " +
@@ -213,9 +213,9 @@ public class MarketItemDao {
         return generatedId;
     }
 
-    /**
-     * 검색/필터/정렬 목록 조회
-     */
+    
+
+
     public List<MarketItem> findByFilter(
             String keyword,
             String category,
@@ -225,13 +225,13 @@ public class MarketItemDao {
             int limit,
             boolean instantOnly
     ) {
-        // 기존 코드 호환용: offset 0으로 첫 페이지만
+        
         return findByFilterPaged(keyword, category, campus, tradeType, sort, 0, limit, instantOnly);
     }
 
-    /**
-     * 상세조회
-     */
+    
+
+
     public MarketItem findById(long id) {
         String sql = "SELECT * FROM market_item WHERE id = ?";
         MarketItem item = null;
@@ -253,10 +253,10 @@ public class MarketItemDao {
         return item;
     }
 
-    /**
-     * 글 수정
-     * 썸네일이 null이면 썸네일은 수정하지 않음
-     */
+    
+
+
+
     public boolean update(MarketItem item) {
         StringBuilder sb = new StringBuilder(
                 "UPDATE market_item SET " +
@@ -301,9 +301,9 @@ public class MarketItemDao {
         }
     }
 
-    /**
-     * 삭제 (작성자 본인만)
-     */
+    
+
+
     public boolean delete(long id, int writerId) {
         String sql = "DELETE FROM market_item WHERE id=? AND writer_id=?";
         try (Connection conn = DBUtil.getConnection();
@@ -318,9 +318,9 @@ public class MarketItemDao {
         }
     }
 
-    /**
-     * 상태 변경 (판매중 / 예약중 / 거래완료)
-     */
+    
+
+
     public boolean updateStatus(long id, int writerId, String status) {
         String sql = "UPDATE market_item SET status=? WHERE id=? AND writer_id=?";
         try (Connection conn = DBUtil.getConnection();
@@ -336,9 +336,9 @@ public class MarketItemDao {
         }
     }
 
-    /**
-     * 찜 카운트 +1
-     */
+    
+
+
     public void increaseWishCount(long id) {
         String sql = "UPDATE market_item SET wish_count = wish_count + 1 WHERE id=?";
         try (Connection conn = DBUtil.getConnection();
@@ -350,9 +350,9 @@ public class MarketItemDao {
         }
     }
 
-    /**
-     * 채팅 카운트 +1
-     */
+    
+
+
     public void increaseChatCount(long id) {
         String sql = "UPDATE market_item SET chat_count = chat_count + 1 WHERE id=?";
         try (Connection conn = DBUtil.getConnection();
@@ -364,9 +364,9 @@ public class MarketItemDao {
         }
     }
 
-    /**
-     * 특정 유저의 판매글 목록
-     */
+    
+
+
     public List<MarketItem> findByWriter(int writerId) {
         List<MarketItem> list = new ArrayList<>();
         String sql = "SELECT * FROM market_item WHERE writer_id = ? ORDER BY created_at DESC";
@@ -388,9 +388,9 @@ public class MarketItemDao {
         return list;
     }
 
-    /**
-     * 나의 거래현황 (상태별 개수)
-     */
+    
+
+
     public int countByWriterAndStatus(int writerId, String status) {
         String sql = "SELECT COUNT(*) FROM market_item WHERE writer_id=? AND status=?";
         try (Connection conn = DBUtil.getConnection();
@@ -425,7 +425,7 @@ public class MarketItemDao {
         item.setThumbnailUrl(rs.getString("thumbnail_url"));
         item.setDescription(rs.getString("description"));
 
-        // instant_buy / sold info (DB migration 이후 사용)
+        
         try {
             item.setInstantBuy(rs.getInt("instant_buy") == 1);
         } catch (SQLException ignore) {}

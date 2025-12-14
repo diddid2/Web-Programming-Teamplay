@@ -39,7 +39,7 @@ public class EcampusCrawler {
     Map<String, String> cookies;
 
     public boolean login(String username, String password) throws Exception {
-        // 1) login.php 먼저 열어서 쿠키/세션 확보
+        
         Connection.Response loginPageRes = Jsoup.connect("https://ecampus.kangnam.ac.kr/login.php")
                 .method(Connection.Method.GET)
                 .timeout(5000)
@@ -47,34 +47,34 @@ public class EcampusCrawler {
 
         Map<String, String> cookies = loginPageRes.cookies();
 
-        // 2) HTML에서 form action을 읽어와도 되고, 그냥 상수로 써도 됨
-        // Document loginPage = loginPageRes.parse();
-        // Element form = loginPage.selectFirst("form.mform.form-login");
-        // String actionUrl = form.absUrl("action");
+        
+        
+        
+        
         String actionUrl = "https://ecampus.kangnam.ac.kr/login/index.php";
 
-        // 3) 로그인 POST (username / password / rememberusername)
+        
         Connection.Response loginRes = Jsoup.connect(actionUrl)
-                .cookies(cookies) // 위에서 받은 쿠키 이어서 사용
+                .cookies(cookies) 
                 .data("username", username)
                 .data("password", password)
-                .data("rememberusername", "1")   // 체크박스: 기억하기 옵션 (생략해도 보통 OK)
-                .data("loginbutton", "로그인")   // 버튼 name (필수는 아닐 확률이 큼, 그래도 맞춰줌)
+                .data("rememberusername", "1")   
+                .data("loginbutton", "로그인")   
                 .method(Connection.Method.POST)
                 .timeout(5000)
                 .execute();
 
-        // 4) 로그인 이후 페이지 HTML
+        
         Document afterLogin = loginRes.parse();
 
-        // 5) 로그인 성공 여부 체크
-        // 로그인 페이지 body에는 class에 "notloggedin"이 들어있음:
-        // <body ... class="... notloggedin loginpage_7 ">
+        
+        
+        
         boolean stillNotLoggedIn = afterLogin.select("body.notloggedin").size() > 0;
 
-        // 성공시 쿠키를 이 인스턴스에서 계속 쓰고 싶다면 필드에 저장
+        
         if (!stillNotLoggedIn) {
-            this.cookies = loginRes.cookies();  // 필드 Map<String,String> cookies;
+            this.cookies = loginRes.cookies();  
             return true;
         } else {
             return false;
@@ -89,9 +89,9 @@ public class EcampusCrawler {
                 .timeout(5000)
                 .get();
 
-        // ★★★ 이 부분은 실제 HTML 구조 보고 selector 수정 필요 ★★★
-        // 예: Moodle 기준 upcoming events에서 assignment들의 li 요소를 파싱
-        Elements events = doc.select(".course_link"); // 예시
+        
+        
+        Elements events = doc.select(".course_link"); 
         for (Element ev : events) {
         	String link = ev.attr("href");
         	System.out.println(link);
@@ -109,8 +109,8 @@ public class EcampusCrawler {
         		String assign_link = assignment.select("a").attr("href");
         		if (assign_link.equals(""))
         		{
-        			//예외 처리, assign_link가 ""인 경우 과제이지만 기한 제한이 걸려있어 접근이 안되는경우.
-        			//임시로 건너뛰기 처리함. 
+        			
+        			
         			continue;
         		}
         		Document assign_page = Jsoup.connect(assign_link)
@@ -132,7 +132,7 @@ public class EcampusCrawler {
         		
         		if (dueText == null || dueText.trim().isEmpty()) {
         		    System.out.println("[SKIP] 종료 일시 없음 → " + title);
-        		    continue;   // 이 과제는 패스
+        		    continue;   
         		}
         		
                 try {

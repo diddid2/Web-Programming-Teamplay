@@ -32,14 +32,14 @@
     try {
         conn = DBUtil.getConnection();
 
-        // 1) 조회수 증가
+        
         String hitSql = "UPDATE BOARD_POST SET HIT = HIT + 1 WHERE POST_NO = ?";
         pstmt = conn.prepareStatement(hitSql);
         pstmt.setInt(1, postNo);
         pstmt.executeUpdate();
         pstmt.close();
 
-        // 2) 게시글 정보 조회
+        
         String sql =
             "SELECT TITLE, CONTENT, USER_ID, LIKE_COUNT, SCRAP_COUNT, COMMENT_COUNT, HIT, " +
             "       DATE_FORMAT(CREATED_AT, '%Y-%m-%d') AS CREATED_AT " +
@@ -71,7 +71,7 @@
         try { if (conn != null) conn.close(); } catch (Exception ex) {}
     }
 
-    // 내용 줄바꿈 처리
+    
     if (content != null) {
         content = content.replace("\r\n", "<br>").replace("\n", "<br>");
     }
@@ -159,7 +159,7 @@
             color:#e5e7eb;
         }
 
-        /* 댓글 영역 */
+        
         .comment-section {
             margin-top:24px;
         }
@@ -264,7 +264,7 @@
         </div>
     </div>
 
-    <!-- 댓글 영역 -->
+    
     <div class="comment-section">
         <div class="comment-title">댓글 (<%= commentCount %>)</div>
 
@@ -321,7 +321,7 @@
         %>
         </div>
 
-        <!-- 댓글 작성 폼 -->
+        
         <div class="comment-form">
         <%
             if (loginUser != null) {

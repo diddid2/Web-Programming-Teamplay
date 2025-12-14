@@ -14,13 +14,12 @@ request.setAttribute("currentMenu", "timetable");
         return;
     }
 
-    // 09:00 ~ 17:00, 1시간 간격
     int[] times = {540,600,660,720,780,840,900,960,1020};
-    boolean[][] drawn = new boolean[times.length][5];  // [시간 index][요일 0~4]
+    boolean[][] drawn = new boolean[times.length][5];  
 
     List<Lecture> lectures = new ArrayList<>();
 
-    // --- 시간표 강의 불러오기 ---
+    
     try (Connection conn = DBUtil.getConnection();
          PreparedStatement pstmt = conn.prepareStatement(
              "SELECT TITLE, PROFESSOR, DAY, START_MIN, END_MIN " +
@@ -33,8 +32,8 @@ request.setAttribute("currentMenu", "timetable");
                 Lecture L = new Lecture();
                 L.title     = rs.getString("TITLE");
                 L.professor = rs.getString("PROFESSOR");
-                L.day       = rs.getInt("DAY");        // 0=월~4=금
-                L.start     = rs.getInt("START_MIN");  // 분
+                L.day       = rs.getInt("DAY");        
+                L.start     = rs.getInt("START_MIN");  
                 L.end       = rs.getInt("END_MIN");
                 lectures.add(L);
             }
@@ -43,7 +42,7 @@ request.setAttribute("currentMenu", "timetable");
         e.printStackTrace();
     }
 
-    // --- 과목별 "가장 급한 과제" 미리 계산 (PASS 제외, DONE 제외) ---
+    
     Map<String, Map<String,Object>> urgentMap = new HashMap<>();
     SimpleDateFormat urgentSdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
@@ -63,7 +62,7 @@ request.setAttribute("currentMenu", "timetable");
                 String courseName = rs2.getString("COURSE_NAME");
                 if (courseName == null || courseName.trim().isEmpty()) continue;
 
-                // 이미 이 과목의 가장 급한 과제가 저장되어 있으면 스킵 (첫 번째가 가장 급함)
+                
                 if (urgentMap.containsKey(courseName)) continue;
 
                 Timestamp dueTs = rs2.getTimestamp("DUE_DATE");
@@ -112,7 +111,7 @@ body {
     border: 1px solid #273244;
 }
 
-/* 제목줄 */
+
 .title-row {
     display: flex;
     justify-content: space-between;
@@ -142,7 +141,7 @@ body {
     font-size: 11px;
 }
 
-/* 테스트용 가짜 시간 선택 */
+
 .time-debug {
     margin-top: 10px;
     font-size: 11px;
@@ -170,25 +169,22 @@ body {
     opacity: 0.7;
 }
 
-/* 래퍼 (현재 시간 선, 오늘 요일 하이라이트 포지셔닝용) */
 .timetable-wrapper {
     position: relative;
     margin-top: 16px;
     z-index: 0;
 
-    /* ✅ (추가) 분→px 배치용 변수 (JS에서 실제 rowHeight 기준으로 갱신됨) */
     --hour-h: 80px;
     --min-px: 1.333333px;
 }
 
-/* 오늘 요일 컬럼 하이라이트(반투명 오버레이) */
 #today-highlight {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     width: 0;
-    background: rgba(52,122,226,0.18);  /* 현재 디자인보다 아주 살짝 밝은 톤 */
+    background: rgba(52,122,226,0.18);
     opacity: 0;
     pointer-events: none;
     z-index: 0;
@@ -198,7 +194,7 @@ body {
     opacity: 1;
 }
 
-/* 테이블 */
+
 .timetable-table {
     width: 100%;
     border-collapse: collapse;
@@ -219,9 +215,9 @@ body {
     border-color: #2f3f63;
 }
 
-/* 🔽 바디 셀 컬럼 강조용 */
+
 .timetable-table tbody td.today-col {
-    background: #12213c;           /* 헤더와 비슷한 톤으로 진하게 */
+    background: #12213c;           
     border-color: #2f3f63;
 }
 
@@ -233,7 +229,7 @@ body {
     font-size: 12px;
 }
 
-/* 시간축 / 격자 */
+
 .time-cell {
     background: #111827;
     color: #9CA3AF;
@@ -255,16 +251,16 @@ body {
     overflow: visible;
 }
 
-/* ✅ 강의 박스: 분 단위 배치로 변경 (기존 6%/88% 제거) */
+
 .subject-box {
     position: absolute;
 
-    /* (추가) 기본값: 혹시 style이 없을 때 깨지는 것 방지 */
+    
     --row-start: 0;
     --start: 0;
     --end: 0;
 
-    /* ✅ 핵심: 분 -> px */
+    
     top: calc((var(--start) - var(--row-start)) * var(--min-px));
     height: calc((var(--end) - var(--start)) * var(--min-px));
 
@@ -273,7 +269,7 @@ body {
 
     padding: 10px 12px;
 
-    background: #111827;  /* 불투명: 뒤의 시간 선을 가림 */
+    background: #111827;  
     border: 1.5px solid rgba(255,255,255,0.18);
     border-radius: 14px;
     box-sizing: border-box;
@@ -297,14 +293,14 @@ body {
     transform: translateY(-1px);
 }
 
-/* 현재 진행 중인 강의 강조 */
+
 .subject-box.is-current {
     border-color: #347AE2;
     box-shadow: 0 0 0 2px rgba(52,122,226,0.9),
                 0 14px 35px rgba(0,0,0,0.9);
 }
 
-/* 텍스트 */
+
 .lecture-title {
     font-size: 12px;
     font-weight: 500;
@@ -321,7 +317,7 @@ body {
     color: #9DA9BC;
 }
 
-/* 현재 시간 라인 */
+
 .current-time-line {
     position: absolute;
     left: 0;
@@ -331,17 +327,17 @@ body {
     z-index: 2;
 }
 
-/* 🔥 라벨 오른쪽 부분만 선을 그림 */
+
 .current-time-line::after {
     content: "";
     position: absolute;
     top: 0;
-    left: var(--line-start, 0); /* JS에서 설정 */
+    left: var(--line-start, 0); 
     right: 0;
     border-top: 2px solid #347AE2;
 }
 
-/* 라벨을 선의 정중앙 + 시간 칸 중앙에 맞춤 (left는 JS로 설정) */
+
 .current-time-label {
     position: absolute;
     top: 0;
@@ -351,16 +347,16 @@ body {
     font-size: 14px;
     font-weight: 600;
 
-    /* 🔽 색만 이렇게 */
-    background: #347AE2;   /* 테두리와 동일 */
+    
+    background: #347AE2;   
     border: 2px solid #347AE2;
-    color: #0B1120;        /* 진한 남색 글자라서 안 덮임 */
+    color: #0B1120;        
 
     border-radius: 999px;
     box-shadow: 0 0 0 1px rgba(15,23,42,0.9);
 }
 
-/* 과목 툴팁 */
+
 #lecture-tooltip {
     position: fixed;
     display: none;
@@ -398,7 +394,7 @@ body {
     padding: 3px 8px;
 
     border-radius: 999px;
-    border: 1px solid #22c55e;          /* 기본 = 보통(초록) */
+    border: 1px solid #22c55e;          
     background: rgba(34,197,94,0.10);
     font-size: 10.5px;
 }
@@ -438,7 +434,7 @@ body {
 
     <div class="info-text">* 강남대학교 수강신청 데이터를 기반으로 구성됩니다.</div>
 
-    <!-- 테스트용 가짜 시간 / 요일 -->
+    
     <div class="time-debug">
         <label>
             <input type="checkbox" id="useTestTime">
@@ -468,7 +464,7 @@ body {
          data-start="<%= times[0] %>"
          data-end="<%= times[times.length-1] + 60 %>">
 
-        <!-- 오늘 요일 하이라이트 -->
+        
         <div id="today-highlight"></div>
 
         <table class="timetable-table">
@@ -504,7 +500,7 @@ body {
             }
 
             if (target == null) { %>
-                <!-- 🔹 빈 셀에도 data-day -->
+                
                 <td data-day="<%= day %>"></td>
 
             <% } else {
@@ -528,7 +524,7 @@ body {
                     urgentPrio  = (String)urgent.get("PRIORITY_TEXT");
                 }
             %>
-                <!-- 🔹 강의 셀에도 data-day -->
+                
                 <td rowspan="<%= rowspan %>" data-day="<%= day %>">
     <div class="subject-box"
          style="--row-start:<%= times[i] %>; --start:<%= target.start %>; --end:<%= target.end %>;"
@@ -556,14 +552,14 @@ body {
             </tbody>
         </table>
 
-        <!-- 현재 시간 라인 -->
+        
         <div id="current-time-line" class="current-time-line" style="display:none;">
             <span class="current-time-label"></span>
         </div>
     </div>
 </div>
 
-<!-- 과목 툴팁 -->
+
 <div id="lecture-tooltip">
     <div class="tt-title"></div>
     <div class="tt-time"></div>
@@ -576,7 +572,7 @@ body {
 (function() {
     function pad(n) { return (n < 10 ? '0' + n : '' + n); }
 
-    // 실제/테스트 시간 공통 처리
+    
     function getNowInfo() {
         const useTest = document.getElementById('useTestTime');
         const testDaySel = document.getElementById('testDay');
@@ -588,15 +584,15 @@ body {
             const h = parseInt(parts[0] || '0', 10);
             const m = parseInt(parts[1] || '0', 10);
             const minutes = h * 60 + m;
-            const dayIndex = parseInt(testDaySel.value, 10); // 0~4
+            const dayIndex = parseInt(testDaySel.value, 10);
             const label = pad(h) + ':' + pad(m);
             return { dayIndex, minutes, label };
         } else {
             const now = new Date();
-            const jsDay = now.getDay(); // 0:일 ~ 6:토
+            const jsDay = now.getDay(); 
             let dayIndex = -1;
             if (jsDay >= 1 && jsDay <= 5) {
-                dayIndex = jsDay - 1; // 월=0
+                dayIndex = jsDay - 1;
             }
             const minutes = now.getHours() * 60 + now.getMinutes();
             const label = pad(now.getHours()) + ':' + pad(now.getMinutes());
@@ -604,7 +600,7 @@ body {
         }
     }
 
-    // 현재 시간 기준으로 진행 중 강의 강조
+    
     function highlightCurrent(nowInfo) {
         const dayIndex = nowInfo.dayIndex;
         const minutes  = nowInfo.minutes;
@@ -622,12 +618,12 @@ body {
         });
     }
 
-    // 오늘(또는 테스트로 선택한) 요일 컬럼 하이라이트
+    
    function highlightTodayColumn(dayIndex, wrapper, table) {
     const highlight = document.getElementById('today-highlight');
     if (!wrapper || !table || !highlight) return;
 
-    // 이전 헤더/바디 강조 제거
+    
     table.querySelectorAll('thead th.today-header')
         .forEach(th => th.classList.remove('today-header'));
     table.querySelectorAll('tbody td.today-col')
@@ -640,19 +636,15 @@ body {
 
     const headerRow = table.querySelector('thead tr');
     if (!headerRow) return;
-
-    // 0: 시간, 1: 월, 2: 화, ...
     const th = headerRow.children[dayIndex + 1];
     if (!th) return;
 
-    // 헤더 강조
+    
     th.classList.add('today-header');
-
-    // 🔹 data-day 로 해당 요일 컬럼 전체 강조
+    
     table.querySelectorAll('tbody td[data-day="' + dayIndex + '"]')
          .forEach(td => td.classList.add('today-col'));
 
-    // 오버레이 박스 위치 (있다면)
     const wrapperRect = wrapper.getBoundingClientRect();
     const thRect = th.getBoundingClientRect();
     highlight.style.left  = (thRect.left - wrapperRect.left) + 'px';
@@ -669,7 +661,6 @@ body {
 
         const wrapperRect = wrapper.getBoundingClientRect();
 
-        // 시간 열(th.time-cell)을 기준으로 수직 위치 계산
         const firstTimeCell = table.querySelector('tbody tr .time-cell');
         if (!firstTimeCell) return;
 
@@ -677,7 +668,6 @@ body {
         const rowTop    = cellRect.top - wrapperRect.top;
         const rowHeight = cellRect.height;
 
-        /* ✅ (추가) 과목 박스 분단위 배치 스케일을 현재 rowHeight 기준으로 맞춤 */
         wrapper.style.setProperty('--hour-h', rowHeight + 'px');
         wrapper.style.setProperty('--min-px', (rowHeight / 60) + 'px');
 
@@ -687,10 +677,8 @@ body {
         const nowInfo = getNowInfo();
         const minutes = nowInfo.minutes;
 
-        // 오늘(또는 테스트 선택) 요일 컬럼 하이라이트
         highlightTodayColumn(nowInfo.dayIndex, wrapper, table);
 
-        // 강의 강조
         highlightCurrent(nowInfo);
 
         if (minutes < startMinutes || minutes > endMinutes) {
@@ -712,10 +700,8 @@ body {
             const labelLeft =
                 (timeCellRect.left - wrapperRect.left) + (timeCellRect.width / 2);
 
-            // 라벨 X 위치
             label.style.left = labelLeft + 'px';
 
-            // 🔹 라벨 DOM의 실제 오른쪽 끝 기준으로 선 시작
             const labelRect  = label.getBoundingClientRect();
             const lineStart  = (labelRect.right - wrapperRect.left);
             line.style.setProperty('--line-start', lineStart + 'px');
@@ -787,7 +773,6 @@ body {
         updateCurrentTimeLine();
         initLectureTooltip();
 
-        // 테스트 시간 변경 시 즉시 반영
         ['useTestTime','testDay','testTime'].forEach(function(id) {
             const el = document.getElementById(id);
             if (!el) return;
@@ -798,7 +783,7 @@ body {
         });
     });
 
-    // 실제 시간 기준 5분마다 자동 갱신
+    
     setInterval(updateCurrentTimeLine, 5 * 60 * 1000);
 })();
 </script>

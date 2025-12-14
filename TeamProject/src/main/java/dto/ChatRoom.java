@@ -8,21 +8,21 @@ public class ChatRoom {
     private int sellerId;
     private int buyerId;
 
-    // market item info
+    
     private String itemTitle;
     private String itemStatus;
     private int itemPrice;
     private String itemThumbnailUrl;
 
-    // member info
+    
     private String sellerName;
     private String buyerName;
 
-    // last message
+    
     private String lastMessage;
     private Timestamp lastMessageAt;
 
-    // unread count for current viewer (optional)
+    
     private int unreadCount;
 
     public long getRoomId() { return roomId; }

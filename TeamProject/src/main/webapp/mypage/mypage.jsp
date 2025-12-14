@@ -3,8 +3,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
     request.setCharacterEncoding("UTF-8");
-    // GNB에서 '설정' 혹은 '마이페이지' 탭에 불 들어가게 조절
-    request.setAttribute("currentMenu", "settings");  // 필요하면 "mypage"로 바꾸고 gnb.jsp도 맞춰줘
+    
+    request.setAttribute("currentMenu", "settings");  
 
     String userId = (String)session.getAttribute("userId");
     if (userId == null) {
@@ -166,7 +166,7 @@
 <jsp:include page="/common/gnb.jsp" />
 
 <main>
-    <!-- 상단: 간단 프로필 요약 -->
+    
     <section class="card section-full">
         <div class="card-header">
             <div class="card-title">내 계정</div>
@@ -191,7 +191,7 @@
         </div>
     </section>
 
-    <!-- 좌측: 이름/전공 수정 -->
+    
     <section class="card">
         <div class="card-header">
             <div class="card-title">프로필 수정</div>
@@ -218,7 +218,7 @@
         </form>
     </section>
 
-    <!-- 우측: 비밀번호 변경 -->
+    
     <section class="card">
         <div class="card-header">
             <div class="card-title">비밀번호 변경</div>

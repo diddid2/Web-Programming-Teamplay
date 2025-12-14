@@ -10,17 +10,17 @@ import java.util.List;
 
 public class MarketChatDao {
 
-    /**
-     * (itemId, buyerId) 기준으로 채팅방이 있으면 가져오고, 없으면 생성합니다.
-     * @return roomId
-     */
+    
+
+
+
     public long getOrCreateRoom(long itemId, int sellerId, int buyerId) {
         String findSql = "SELECT room_id FROM market_chat_room WHERE item_id=? AND buyer_id=?";
         String insertSql = "INSERT INTO market_chat_room (item_id, seller_id, buyer_id, seller_last_read_msg_id, buyer_last_read_msg_id) "
                 + "VALUES (?, ?, ?, 0, 0)";
 
         try (Connection conn = DBUtil.getConnection()) {
-            // 1) find
+            
             try (PreparedStatement ps = conn.prepareStatement(findSql)) {
                 ps.setLong(1, itemId);
                 ps.setInt(2, buyerId);
@@ -29,7 +29,7 @@ public class MarketChatDao {
                 }
             }
 
-            // 2) create
+            
             try (PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setLong(1, itemId);
                 ps.setInt(2, sellerId);
@@ -47,18 +47,18 @@ public class MarketChatDao {
         return -1;
     }
 
-    /**
-     * 트랜잭션을 공유하기 위한 버전(외부에서 Connection 전달)
-     * - checkout 트랜잭션 내에서 호출되어야 Lock wait timeout을 피할 수 있습니다.
-     * - conn은 닫지 않습니다.
-     */
+    
+
+
+
+
     public long getOrCreateRoom(Connection conn, long itemId, int sellerId, int buyerId) {
         String findSql = "SELECT room_id FROM market_chat_room WHERE item_id=? AND buyer_id=?";
         String insertSql = "INSERT INTO market_chat_room (item_id, seller_id, buyer_id, seller_last_read_msg_id, buyer_last_read_msg_id) "
                 + "VALUES (?, ?, ?, 0, 0)";
 
         try {
-            // 1) find
+            
             try (PreparedStatement ps = conn.prepareStatement(findSql)) {
                 ps.setLong(1, itemId);
                 ps.setInt(2, buyerId);
@@ -67,7 +67,7 @@ public class MarketChatDao {
                 }
             }
 
-            // 2) create
+            
             try (PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setLong(1, itemId);
                 ps.setInt(2, sellerId);
@@ -148,7 +148,7 @@ public class MarketChatDao {
     }
 
     public List<ChatRoom> listRoomsByUser(int memberNo) {
-        // unreadCount: 내가 마지막으로 읽은 msg_id 이후, 내가 보낸 메시지를 제외하고 카운트
+        
         String sql =
                 "SELECT r.room_id, r.item_id, r.seller_id, r.buyer_id, " +
                 "       i.title AS item_title, i.status AS item_status, i.price AS item_price, i.thumbnail_url AS item_thumb, " +
@@ -180,12 +180,12 @@ public class MarketChatDao {
         List<ChatRoom> list = new ArrayList<>();
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            // uc subquery
+            
             ps.setInt(1, memberNo);
             ps.setInt(2, memberNo);
             ps.setInt(3, memberNo);
             ps.setInt(4, memberNo);
-            // main where
+            
             ps.setInt(5, memberNo);
             ps.setInt(6, memberNo);
             try (ResultSet rs = ps.executeQuery()) {
@@ -197,10 +197,10 @@ public class MarketChatDao {
         return list;
     }
 
-    /**
-     * 트랜잭션 공유 버전 (외부에서 Connection 전달)
-     * - conn은 닫지 않습니다.
-     */
+    
+
+
+
     public long insertMessage(Connection conn, long roomId, Integer senderId, String message, String messageType) {
         String sql = "INSERT INTO market_chat_message (room_id, sender_id, message, message_type) VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -226,9 +226,9 @@ public class MarketChatDao {
         return insertMessage(roomId, Integer.valueOf(senderId), message, "USER");
     }
 
-    /**
-     * 시스템 메시지/주문 상태 알림 등 (senderId NULL 허용)
-     */
+    
+
+
     public long insertMessage(long roomId, Integer senderId, String message, String messageType) {
         String sql = "INSERT INTO market_chat_message (room_id, sender_id, message, message_type) VALUES (?, ?, ?, ?)";
         try (Connection conn = DBUtil.getConnection();
@@ -279,9 +279,9 @@ public class MarketChatDao {
         return list;
     }
 
-    /**
-     * 채팅방 읽음 처리: 현재 사용자(seller/buyer)에 해당하는 last_read_msg_id를 올립니다.
-     */
+    
+
+
     public void markRead(long roomId, int memberNo, long lastMsgId) {
         if (roomId <= 0 || memberNo <= 0 || lastMsgId <= 0) return;
         String sqlSeller = "UPDATE market_chat_room SET seller_last_read_msg_id = GREATEST(seller_last_read_msg_id, ?) "
@@ -302,14 +302,14 @@ public class MarketChatDao {
                 ps.executeUpdate();
             }
         } catch (Exception e) {
-            // 읽음처리는 실패해도 서비스 진행에는 영향 없게
+            
             e.printStackTrace();
         }
     }
 
-    /**
-     * GNB 배지용: 전체 안읽은 메시지 개수
-     */
+    
+
+
     public int countUnreadTotal(int memberNo) {
         String sql =
                 "SELECT COUNT(*) " +

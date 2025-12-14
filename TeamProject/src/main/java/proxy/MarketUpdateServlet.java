@@ -18,24 +18,29 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
-@WebServlet("/market/write")
+@WebServlet("/market/update")
 @MultipartConfig(
         fileSizeThreshold = 1024 * 1024,      // 1MB
         maxFileSize = 5 * 1024 * 1024,        // 5MB
         maxRequestSize = 6 * 1024 * 1024      // 6MB
 )
-public class MarketWriteServlet extends HttpServlet {
+public class MarketUpdateServlet extends HttpServlet {
 
     private final MarketItemDao marketItemDao = new MarketItemDao();
-    
-    private String sanitizeSubmittedFileName(String submitted) {
-    	  if (submitted == null) return null;
-    	  String s = submitted.replace("\"", "").trim();
-    	  int lastSep = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
-    	  if (lastSep != -1) s = s.substring(lastSep + 1);
-    	  return s.isEmpty() ? null : s;
-    	}
 
+    private String emptyToNull(String s) {
+        if (s == null) return null;
+        s = s.trim();
+        return s.isEmpty() ? null : s;
+    }
+
+    private String sanitizeSubmittedFileName(String submitted) {
+        if (submitted == null) return null;
+        String s = submitted.replace("\"", "").trim();
+        int lastSep = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
+        if (lastSep != -1) s = s.substring(lastSep + 1);
+        return s.isEmpty() ? null : s;
+    }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -56,15 +61,27 @@ public class MarketWriteServlet extends HttpServlet {
             return;
         }
 
-        // id 쿼리 검증: ?id=로그인된 사용자 memberNo
-        String idParam = request.getParameter("id");
-        if (idParam != null && !idParam.isBlank() && !idParam.equals(String.valueOf(memberNo))) {
+        long itemId = 0;
+        try { itemId = Long.parseLong(request.getParameter("itemId")); } catch (Exception ignore) {}
+        if (itemId <= 0) {
             response.setContentType("text/html; charset=UTF-8");
             response.getWriter().println("<script>alert('잘못된 요청입니다.');location.href='" + ctx + "/market/marketMain.jsp';</script>");
             return;
         }
 
-        // 파라미터 읽기
+        MarketItem existing = marketItemDao.findById(itemId);
+        if (existing == null) {
+            response.setContentType("text/html; charset=UTF-8");
+            response.getWriter().println("<script>alert('상품을 찾을 수 없습니다.');location.href='" + ctx + "/market/marketMain.jsp';</script>");
+            return;
+        }
+        if (existing.getWriterId() == null || existing.getWriterId().intValue() != memberNo.intValue()) {
+            response.setContentType("text/html; charset=UTF-8");
+            response.getWriter().println("<script>alert('수정 권한이 없습니다.');location.href='" + ctx + "/market/marketView.jsp?id=" + itemId + "';</script>");
+            return;
+        }
+
+        // 파라미터
         String title = emptyToNull(request.getParameter("title"));
         String category = emptyToNull(request.getParameter("category"));
         String priceStr = emptyToNull(request.getParameter("price"));
@@ -73,9 +90,10 @@ public class MarketWriteServlet extends HttpServlet {
         String meetingTime = emptyToNull(request.getParameter("meetingTime"));
         String tradeType = emptyToNull(request.getParameter("tradeType"));
         String description = emptyToNull(request.getParameter("description"));
+        String status = emptyToNull(request.getParameter("status"));
         boolean instantBuy = request.getParameter("instantBuy") != null;
+        if (status == null) status = (existing.getStatus() != null ? existing.getStatus() : "ON_SALE");
 
-        // 필수값 체크 (price는 0도 허용하지만 입력은 있어야 함)
         if (title == null || category == null || campus == null || tradeType == null || priceStr == null) {
             response.setContentType("text/html; charset=UTF-8");
             response.getWriter().println("<script>alert('필수 항목을 모두 입력해주세요.');history.back();</script>");
@@ -98,90 +116,61 @@ public class MarketWriteServlet extends HttpServlet {
             return;
         }
 
-        // 썸네일 업로드 처리
+        // 썸네일 업로드(선택)
         String thumbnailUrl = null;
         Part thumbnailPart = null;
         try {
             thumbnailPart = request.getPart("thumbnail");
         } catch (IllegalStateException ignore) {
-            // multipart가 아니거나 설정 문제
             thumbnailPart = null;
         }
 
         if (thumbnailPart != null && thumbnailPart.getSize() > 0) {
-        	String submitted = sanitizeSubmittedFileName(thumbnailPart.getSubmittedFileName());
-        	String ext = "";
-        	if (submitted != null) {
-        	  int dot = submitted.lastIndexOf('.');
-        	  if (dot != -1 && dot < submitted.length() - 1) ext = submitted.substring(dot);
-        	}
-        	String fileName = UUID.randomUUID() + ext;
+            String submitted = sanitizeSubmittedFileName(thumbnailPart.getSubmittedFileName());
+            String ext = "";
+            if (submitted != null) {
+                int dot = submitted.lastIndexOf('.');
+                if (dot != -1 && dot < submitted.length() - 1) ext = submitted.substring(dot);
+            }
+            String fileName = UUID.randomUUID() + ext;
 
-        	// 저장
-        	
-
-
-        	String saveDir = getServletContext().getRealPath("/resources/MarketThumbnail");
-        	File dir = new File(saveDir);
-        	if (!dir.exists()) dir.mkdirs();
+            String saveDir = getServletContext().getRealPath("/resources/MarketThumbnail");
+            File dir = new File(saveDir);
+            if (!dir.exists()) dir.mkdirs();
 
             File dest = new File(dir, fileName);
-        	try (InputStream in = thumbnailPart.getInputStream()) {
-        	  Files.copy(in, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        	}
+            try (InputStream in = thumbnailPart.getInputStream()) {
+                Files.copy(in, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
 
-            // 웹에서 접근 가능한 경로로 저장
+            // DB에는 컨텍스트 제외한 상대 경로로 저장
             thumbnailUrl = "/resources/MarketThumbnail/" + fileName;
         }
 
-        // DTO 구성
         MarketItem item = new MarketItem();
+        item.setId(itemId);
+        item.setWriterId(memberNo);
         item.setTitle(title);
         item.setCategory(category);
         item.setPrice(price);
-        item.setStatus("ON_SALE");
         item.setCampus(campus);
         item.setMeetingPlace(meetingPlace);
         item.setMeetingTime(meetingTime);
         item.setTradeType(tradeType);
         item.setInstantBuy(instantBuy);
-        item.setWishCount(0);
-        item.setChatCount(0);
-        item.setThumbnailUrl(thumbnailUrl);
         item.setDescription(description);
-        item.setWriterId(memberNo);
+        item.setStatus(status);
 
-        long newId = marketItemDao.insert(item);
+        // 새 썸네일 업로드가 있으면 교체 (없으면 기존 유지)
+        item.setThumbnailUrl(thumbnailUrl);
 
-        if (newId <= 0) {
+        boolean ok = marketItemDao.update(item);
+        if (!ok) {
             response.setContentType("text/html; charset=UTF-8");
-            response.getWriter().println("<script>alert('등록에 실패했습니다.');history.back();</script>");
+            response.getWriter().println("<script>alert('수정에 실패했습니다.');history.back();</script>");
             return;
         }
 
-        response.sendRedirect(ctx + "/market/marketView.jsp?id=" + newId);
-    }
-
-    private String emptyToNull(String s) {
-        if (s == null) return null;
-        s = s.trim();
-        return s.isEmpty() ? null : s;
-    }
-
-    private String getSubmittedFileName(Part part) {
-        // Content-Disposition: form-data; name="thumbnail"; filename="a.png"
-        String cd = part.getHeader("content-disposition");
-        if (cd == null) return null;
-        for (String token : cd.split(";")) {
-            token = token.trim();
-            if (token.startsWith("filename=")) {
-                String fileName = token.substring("filename=".length()).trim().replace("", "");
-                // IE/Edge 대응: C:\fakepath\a.png
-                int lastSep = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));
-                if (lastSep != -1) fileName = fileName.substring(lastSep + 1);
-                return fileName;
-            }
-        }
-        return null;
+        response.sendRedirect(ctx + "/market/marketView.jsp?id=" + itemId);
     }
 }

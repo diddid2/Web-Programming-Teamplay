@@ -1,5 +1,25 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="java.util.*, dao.MarketItemDao, dto.MarketItem" %>
+<%@ page import="java.util.*, java.sql.*, java.net.URLEncoder, util.DBUtil, dao.MarketItemDao, dto.MarketItem" %>
+
+<%!
+    String thumbSrc(String ctx, String raw) {
+        if (raw == null) return null;
+        String s = raw.trim();
+        if (s.isEmpty()) return null;
+        if (s.startsWith("http://") || s.startsWith("https://")) return s;
+        if (s.startsWith(ctx + "/")) return s;
+        if (s.startsWith("/")) return ctx + s;
+        return ctx + "/" + s;
+    }
+
+    String enc(String s) {
+        try {
+            return URLEncoder.encode(s == null ? "" : s, "UTF-8");
+        } catch (Exception e) {
+            return "";
+        }
+    }
+%>
 
 <%
     String userId = (String) session.getAttribute("userId");
@@ -14,6 +34,20 @@
     String campus    = request.getParameter("campus");
     String tradeType = request.getParameter("tradeType");
     String sort      = request.getParameter("sort");
+    String instantOnlyParam = request.getParameter("instantOnly");
+    boolean instantOnly = "1".equals(instantOnlyParam);
+
+    int pageSize = 30;
+    int pageNo = 1;
+    try {
+        String pageParam = request.getParameter("page");
+        if (pageParam != null && !pageParam.trim().isEmpty()) {
+            pageNo = Integer.parseInt(pageParam);
+        }
+    } catch (Exception ignore) {
+        pageNo = 1;
+    }
+    if (pageNo < 1) pageNo = 1;
 
     if (category == null)  category = "ALL";
     if (campus == null)    campus = "ALL";
@@ -21,20 +55,73 @@
     if (sort == null)      sort = "latest";
 
     MarketItemDao marketDao = new MarketItemDao();
-    List<MarketItem> items = marketDao.findByFilter(
+
+    int totalCount = marketDao.countByFilter(keyword, category, campus, tradeType, instantOnly);
+    int totalPages = (int) Math.ceil(totalCount / (double) pageSize);
+    if (totalPages < 1) totalPages = 1;
+    if (pageNo > totalPages) pageNo = totalPages;
+    int offset = (pageNo - 1) * pageSize;
+
+    List<MarketItem> items = marketDao.findByFilterPaged(
             keyword,
             category,
             campus,
             tradeType,
             sort,
-            30
+            offset,
+            pageSize,
+            instantOnly
     );
 
-    int todayCount = items.size();  // 간단히 현재 조회된 개수로 표시 (나중에 진짜 오늘 기준으로 바꿔도 됨)
+    int todayCount = totalCount; // 현재 조건에 해당하는 전체 개수
     int onSaleCount = 0;
     for (MarketItem mi : items) {
         if ("ON_SALE".equalsIgnoreCase(mi.getStatus())) onSaleCount++;
     }
+
+    // ===== 내 거래현황(로그인 연동) =====
+    String userName = (String) session.getAttribute("userName");
+    Integer memberNo = (Integer) session.getAttribute("memberNo");
+
+    int mySaleCount = 0;
+    int myReservedCount = 0;
+    int mySoldCount = 0;
+
+    if (userId != null) {
+        // memberNo가 세션에 없으면 MEMBER 테이블에서 조회
+        if (memberNo == null) {
+            String sqlMem = "SELECT MEMBER_NO FROM MEMBER WHERE USER_ID=?";
+            try (Connection conn = DBUtil.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sqlMem)) {
+                ps.setString(1, userId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        memberNo = rs.getInt("MEMBER_NO");
+                        session.setAttribute("memberNo", memberNo);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (memberNo != null) {
+            mySaleCount     = marketDao.countByWriterAndStatus(memberNo, "ON_SALE");
+            myReservedCount = marketDao.countByWriterAndStatus(memberNo, "RESERVED");
+            mySoldCount     = marketDao.countByWriterAndStatus(memberNo, "SOLD_OUT");
+        }
+    }
+
+    // ===== 페이징 링크용 쿼리 =====
+    String pageUrlPrefix = ctx + "/market/marketMain.jsp?"
+            + "keyword=" + enc(keyword)
+            + "&category=" + enc(category)
+            + "&campus=" + enc(campus)
+            + "&tradeType=" + enc(tradeType)
+            + "&sort=" + enc(sort)
+            + "&instantOnly=" + (instantOnly ? "1" : "0")
+            + "&page=";
+
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -243,6 +330,29 @@
             margin-bottom: 20px;
         }
 
+        .tabbar {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(15, 23, 42, 0.98);
+            color: #cbd5e1;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .tab:hover { border-color: rgba(96,165,250,.7); }
+        .tab-active {
+            background: linear-gradient(135deg, rgba(37,99,235,.95), rgba(56,189,248,.95));
+            border: none;
+            color: white;
+            font-weight: 700;
+        }
+
         .search-row {
             display: flex;
             flex-wrap: wrap;
@@ -445,10 +555,26 @@
 
         .product-extra {
             display: flex;
+            align-items: center;
             justify-content: space-between;
             margin-top: 4px;
             font-size: 10px;
             color: #9ca3af;
+        }
+
+        .product-tags {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 2px;
+        }
+
+        .product-tags .chip {
+            white-space: nowrap;
+        }
+
+        .product-tags .chip {
+            white-space: nowrap;
         }
 
         .chip {
@@ -462,6 +588,44 @@
             display: flex;
             justify-content: space-between;
             margin-top: 6px;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .page-link {
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: rgba(15, 23, 42, 0.7);
+            font-size: 12px;
+            color: #e5e7eb;
+            opacity: 0.85;
+        }
+
+        .page-link:hover {
+            opacity: 1;
+            border-color: rgba(96, 165, 250, 0.6);
+            color: #60a5fa;
+        }
+
+        .page-link.active {
+            opacity: 1;
+            border-color: rgba(96, 165, 250, 0.9);
+            background: rgba(37, 99, 235, 0.22);
+            color: #93c5fd;
+            font-weight: 700;
+        }
+
+        .page-link.disabled {
+            opacity: 0.35;
+            pointer-events: none;
         }
 
         .btn-xs {
@@ -679,10 +843,23 @@
                 <div class="card-title">상품 검색</div>
                 <div class="card-subtitle">키워드, 카테고리, 캠퍼스를 선택해서 원하는 상품을 찾아보세요.</div>
             </div>
-            <div class="card-link">고급 필터 · 내 거래만 보기 (추후)</div>
         </div>
 
-        <form class="search-row" method="get" action="<%=ctx%>/market/marketMain.jsp">
+        <div class="tabbar">
+            <button type="button" class="tab <%= (!instantOnly ? "tab-active" : "") %>"
+                    onclick="document.getElementById('instantOnly').value='0'; document.getElementById('searchForm').submit();">
+                전체
+            </button>
+            <button type="button" class="tab <%= (instantOnly ? "tab-active" : "") %>"
+                    onclick="document.getElementById('instantOnly').value='1'; document.getElementById('searchForm').submit();">
+                바로구매
+            </button>
+        </div>
+
+        <form id="searchForm" class="search-row" method="get" action="<%=ctx%>/market/marketMain.jsp">
+            <input type="hidden" id="instantOnly" name="instantOnly" value="<%= instantOnly ? "1" : "0" %>"/>
+            <input type="hidden" name="sort" value="<%= sort %>"/>
+            <input type="hidden" name="page" value="1"/>
             <div class="search-input">
                 <span>🔍</span>
                 <input type="text" name="keyword"
@@ -750,6 +927,8 @@
                         <input type="hidden" name="category" value="<%= category %>">
                         <input type="hidden" name="campus" value="<%= campus %>">
                         <input type="hidden" name="tradeType" value="<%= tradeType %>">
+                        <input type="hidden" name="instantOnly" value="<%= instantOnly ? "1" : "0" %>">
+                        <input type="hidden" name="page" value="1">
                         <select name="sort" onchange="document.getElementById('sortForm').submit()">
                             <option value="latest" <%= "latest".equals(sort) ? "selected" : "" %>>최신순</option>
                             <option value="price_asc" <%= "price_asc".equals(sort) ? "selected" : "" %>>가격 낮은순</option>
@@ -780,14 +959,15 @@
                             }
 
                             String thumb = item.getThumbnailUrl();
-                            boolean hasImg = (thumb != null && !thumb.trim().isEmpty());
+                            String imgSrc = thumbSrc(ctx, thumb);
+                            boolean hasImg = (imgSrc != null);
                 %>
                 <article class="product-card" onclick="location.href='<%=ctx%>/market/marketView.jsp?id=<%=item.getId()%>'">
                     <div class="product-thumb">
                         <div class="product-tag"><%=item.getCategory()%></div>
                         <div class="product-status" style="<%=statusStyle%>"><%=statusLabel%></div>
                         <% if (hasImg) {%>
-                            <img src="<%=item.getThumbnailUrl()%>" alt="상품 이미지">
+                            <img src="<%=imgSrc%>" alt="상품 이미지">
                         <% } else { %>
                             이미지 없음
                         <% } %>
@@ -806,23 +986,28 @@
                     </div>
                     <div class="product-extra">
                         <span>찜 <%=item.getWishCount()%> · 채팅 <%=item.getChatCount()%></span>
-                        <% if (item.getMeetingPlace() != null && !item.getMeetingPlace().trim().isEmpty()) { %>
-                            <span class="chip"><%=item.getMeetingPlace()%></span>
-                        <% } else { %>
-                            <span class="chip">
-                            <%
-                                if ("DIRECT".equalsIgnoreCase(item.getTradeType())) out.print("직거래");
-                                else if ("DELIVERY".equalsIgnoreCase(item.getTradeType())) out.print("택배");
-                                else out.print("직거래+택배");
-                            %>
-                            </span>
-                        <% } %>
+                        <span class="product-tags">
+                            <% if (item.isInstantBuy()) { %>
+                                <span class="chip" style="border-color: rgba(34,197,94,.40); background: rgba(34,197,94,.12); color:#a7f3d0;">바로구매</span>
+                            <% } %>
+                            <% if (item.getMeetingPlace() != null && !item.getMeetingPlace().trim().isEmpty()) { %>
+                                <span class="chip"><%=item.getMeetingPlace()%></span>
+                            <% } else { %>
+                                <span class="chip">
+                                <%
+                                    if ("DIRECT".equalsIgnoreCase(item.getTradeType())) out.print("직거래");
+                                    else if ("DELIVERY".equalsIgnoreCase(item.getTradeType())) out.print("택배");
+                                    else out.print("직거래+택배");
+                                %>
+                                </span>
+                            <% } %>
+                        </span>
                     </div>
                     <div class="product-actions">
                         <button class="btn-xs" type="button"
                                 onclick="event.stopPropagation();location.href='<%=ctx%>/market/marketView.jsp?id=<%=item.getId()%>'">상세보기</button>
                         <button class="btn-xs-primary" type="button"
-                                onclick="event.stopPropagation();alert('채팅 기능은 추후 추가 예정입니다.');">채팅으로 거래하기</button>
+                                onclick="event.stopPropagation();location.href='<%=ctx%>/market/chatStart.jsp?itemId=<%=item.getId()%>'">채팅으로 거래하기</button>
                     </div>
                 </article>
                 <%
@@ -830,6 +1015,24 @@
                     }
                 %>
             </div>
+
+            <%-- 페이지네이션 --%>
+            <% if (totalPages > 1) {
+                int startPage = Math.max(1, pageNo - 2);
+                int endPage = Math.min(totalPages, startPage + 4);
+                startPage = Math.max(1, endPage - 4);
+
+                String prevHref = (pageNo > 1) ? (pageUrlPrefix + (pageNo - 1)) : "#";
+                String nextHref = (pageNo < totalPages) ? (pageUrlPrefix + (pageNo + 1)) : "#";
+            %>
+            <div class="pagination">
+                <a class="page-link <%= (pageNo <= 1 ? "disabled" : "") %>" href="<%=prevHref%>">이전</a>
+                <% for (int p = startPage; p <= endPage; p++) { %>
+                    <a class="page-link <%= (p == pageNo ? "active" : "") %>" href="<%=pageUrlPrefix + p%>"><%=p%></a>
+                <% } %>
+                <a class="page-link <%= (pageNo >= totalPages ? "disabled" : "") %>" href="<%=nextHref%>">다음</a>
+            </div>
+            <% } %>
         </section>
 
         <!-- 오른쪽 사이드 영역 -->
@@ -840,7 +1043,13 @@
                         <div class="card-title">나의 거래 현황</div>
                         <div class="card-subtitle">로그인 시 판매/구매 진행 상태를 한 눈에 볼 수 있어요.</div>
                     </div>
-                    <div class="badge">로그인 필요</div>
+                    <% if (userId == null) { %>
+                        <div class="badge">로그인 필요</div>
+                    <% } else { %>
+                        <div class="badge" style="border-color: rgba(34,197,94,.45); background: rgba(34,197,94,.12); color:#a7f3d0;">
+                            <%= (userName != null ? userName : userId) %> 님
+                        </div>
+                    <% } %>
                 </div>
                 <div class="status-list">
                     <div class="status-row">
@@ -848,22 +1057,32 @@
                             <span>판매 중</span>
                             <span>현재 공개 중인 판매 글</span>
                         </div>
-                        <div class="status-value">0건</div>
+                        <div class="status-value"><%= (userId == null ? 0 : mySaleCount) %>건</div>
                     </div>
                     <div class="status-row">
                         <div class="status-label">
                             <span>예약 중</span>
                             <span>거래 시간만 조율하면 돼요</span>
                         </div>
-                        <div class="status-value">0건</div>
+                        <div class="status-value"><%= (userId == null ? 0 : myReservedCount) %>건</div>
                     </div>
                     <div class="status-row">
                         <div class="status-label">
                             <span>거래 완료</span>
                             <span>후기 남기고 신뢰도를 올려보세요</span>
                         </div>
-                        <div class="status-value">0건</div>
+                        <div class="status-value"><%= (userId == null ? 0 : mySoldCount) %>건</div>
                     </div>
+                </div>
+
+                <div style="margin-top: 12px; display:flex; gap:8px;">
+                    <% if (userId == null) { %>
+                        <button type="button" class="btn-outline" style="width:100%;"
+                                onclick="location.href='<%=ctx%>/login.jsp'">로그인하고 보기</button>
+                    <% } else { %>
+                        <button type="button" class="btn-outline" style="width:100%;"
+                                onclick="location.href='<%=ctx%>/market/myMarket.jsp'">내 거래현황 자세히</button>
+                    <% } %>
                 </div>
             </section>
 
@@ -876,9 +1095,23 @@
 
 </main>
 
+
+<button class="floating-write-btn" style="bottom: 92px; background: rgba(14,165,233,.95);"
+        onclick="location.href='<%=ctx%>/market/myMarket.jsp'">
+    <span class="icon">📦</span>
+    내 거래현황
+</button>
+
 <button class="floating-write-btn" onclick="location.href='<%=ctx%>/market/marketWrite.jsp'">
     <span class="icon">✏️</span>
     중고상품 글쓰기
+</button>
+
+
+<button class="floating-write-btn" style="bottom: 152px; background: rgba(251,191,36,.95); color:#0b1120;"
+        onclick="location.href='<%=ctx%>/market/cart.jsp'">
+    <span class="icon">🛒</span>
+    장바구니
 </button>
 
 </body>

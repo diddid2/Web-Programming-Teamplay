@@ -1,0 +1,10 @@
+CREATE TABLE market_buyer_address (
+  buyer_id INT PRIMARY KEY,
+  recipient_name VARCHAR(50) NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  postcode VARCHAR(10) NOT NULL,
+  address1 VARCHAR(255) NOT NULL,
+  address2 VARCHAR(255),
+  memo VARCHAR(255),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

@@ -28,5 +28,24 @@
 	    <filter-name>encodingFilter</filter-name>
 	    <url-pattern>/*</url-pattern>
 	</filter-mapping>
+	<servlet>
+		<servlet-name>jsp</servlet-name>
+		<servlet-class>org.apache.jasper.servlet.JspServlet</servlet-class>
+		<load-on-startup>3</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>jsp</servlet-name>
+		<url-pattern>*.jsp</url-pattern>
+	</servlet-mapping>
 	
+	<servlet>
+		<servlet-name>marketWriteProc</servlet-name>
+		<servlet-class>market.MarketWriteProcServlet</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>marketWriteProc</servlet-name>
+		<url-pattern>/market/marketWriteProc</url-pattern>
+	</servlet-mapping>
+		
 </web-app>

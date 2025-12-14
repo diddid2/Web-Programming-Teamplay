@@ -1,8 +1,34 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="dao.MarketChatDao" %>
 <%
     String userId   = (String) session.getAttribute("userId");
     String userName = (String) session.getAttribute("userName");
+    Integer memberNo = (Integer) session.getAttribute("memberNo");
     String ctx      = request.getContextPath();
+
+    int unreadTotal = 0;
+    if (userId != null) {
+        // memberNo가 없으면 보정 (GNB 배지 계산용)
+        if (memberNo == null) {
+            try (java.sql.Connection conn = util.DBUtil.getConnection();
+                 java.sql.PreparedStatement ps = conn.prepareStatement("SELECT MEMBER_NO FROM MEMBER WHERE USER_ID=?")) {
+                ps.setString(1, userId);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        memberNo = rs.getInt("MEMBER_NO");
+                        session.setAttribute("memberNo", memberNo);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (memberNo != null) {
+            try {
+                MarketChatDao _dao = new MarketChatDao();
+                unreadTotal = _dao.countUnreadTotal(memberNo);
+            } catch (Exception ignored) {}
+        }
+    }
 
     String currentMenu = (String) request.getAttribute("currentMenu");
     if (currentMenu == null) currentMenu = "";
@@ -126,6 +152,52 @@
     .gnb-btn-primary:hover {
         opacity: .93;
     }
+.gnb-icon-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, .55);
+        background: rgba(15, 23, 42, .55);
+        color: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background .2s ease, border-color .2s ease, transform .08s ease;
+    }
+    .gnb-icon-btn:hover {
+        background: rgba(148,163,184,.12);
+        border-color: rgba(56,189,248,.8);
+        transform: translateY(-1px);
+    }
+    .gnb-icon-btn svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: #e5e7eb;
+        stroke-width: 2;
+    }
+
+    .gnb-icon-wrap { position: relative; }
+
+    .gnb-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(15, 23, 42, .96);
+        box-sizing: border-box;
+    }
 </style>
 
 <header class="gnb-header">
@@ -163,6 +235,18 @@
 
         <!-- 오른쪽: 로그인/회원정보 -->
         <div class="gnb-right">
+            <div class="gnb-icon-wrap">
+                <button class="gnb-icon-btn" title="채팅" onclick="location.href='<%= ctx %>/market/chatList.jsp'">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
+                        <path d="M7.5 11.5h9"/>
+                        <path d="M7.5 8.5h6"/>
+                    </svg>
+                </button>
+                <% if (unreadTotal > 0) { %>
+                    <span class="gnb-badge"><%= (unreadTotal > 99 ? "99+" : String.valueOf(unreadTotal)) %></span>
+                <% } %>
+            </div>
             <%
                 if (userId == null) {
             %>

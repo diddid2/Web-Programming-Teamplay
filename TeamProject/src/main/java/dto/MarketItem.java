@@ -1,5 +1,7 @@
 package dto;
 
+import java.sql.Timestamp;
+
 public class MarketItem {
 
     private long id;
@@ -16,6 +18,14 @@ public class MarketItem {
     private String thumbnailUrl;
     private String description;
     private Integer writerId;    // 로그인 유저 PK (nullable)
+
+    // === instant buy (바로구매) ===
+    // market_item.instant_buy : TINYINT(1)
+    private boolean instantBuy;
+
+    // 판매 완료 시점 기록(선택)
+    private Integer buyerId;
+    private Timestamp soldAt;
 
     public MarketItem() {}
 
@@ -60,4 +70,13 @@ public class MarketItem {
 
     public Integer getWriterId() { return writerId; }
     public void setWriterId(Integer writerId) { this.writerId = writerId; }
+
+    public boolean isInstantBuy() { return instantBuy; }
+    public void setInstantBuy(boolean instantBuy) { this.instantBuy = instantBuy; }
+
+    public Integer getBuyerId() { return buyerId; }
+    public void setBuyerId(Integer buyerId) { this.buyerId = buyerId; }
+
+    public Timestamp getSoldAt() { return soldAt; }
+    public void setSoldAt(Timestamp soldAt) { this.soldAt = soldAt; }
 }

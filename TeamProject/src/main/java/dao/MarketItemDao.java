@@ -10,66 +10,82 @@ import util.DBUtil;
 public class MarketItemDao {
 
     /**
-     * 글 등록 (INSERT)
-     * @return 생성된 PK(id)를 리턴, 실패하면 -1
+     * 검색/필터 목록 개수(페이징용)
      */
-    public long insert(MarketItem item) {
-        String sql = "INSERT INTO market_item " +
-                "(title, category, price, status, campus, " +
-                "meeting_place, meeting_time, trade_type, " +
-                "wish_count, chat_count, thumbnail_url, description, writer_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public int countByFilter(
+            String keyword,
+            String category,
+            String campus,
+            String tradeType,
+            boolean instantOnly
+    ) {
+        StringBuilder sb = new StringBuilder("SELECT COUNT(*) AS cnt FROM market_item WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
 
-        long generatedId = -1;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sb.append(" AND (title LIKE ? OR description LIKE ?)");
+            String like = "%" + keyword.trim() + "%";
+            params.add(like);
+            params.add(like);
+        }
+
+        if (category != null && !category.trim().isEmpty()
+                && !"ALL".equalsIgnoreCase(category)
+                && !"전체 카테고리".equals(category)) {
+            sb.append(" AND category = ?");
+            params.add(category);
+        }
+
+        if (campus != null && !campus.trim().isEmpty()
+                && !"ALL".equalsIgnoreCase(campus)
+                && !"전체 캠퍼스".equals(campus)) {
+            sb.append(" AND campus = ?");
+            params.add(campus);
+        }
+
+        if (tradeType != null && !tradeType.trim().isEmpty()
+                && !"ALL".equalsIgnoreCase(tradeType)
+                && !"거래 방식 전체".equals(tradeType)) {
+            sb.append(" AND trade_type = ?");
+            params.add(tradeType);
+        }
+
+        if (instantOnly) {
+            sb.append(" AND instant_buy = 1");
+        }
 
         try (Connection conn = DBUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement pstmt = conn.prepareStatement(sb.toString())) {
 
-            pstmt.setString(1, item.getTitle());
-            pstmt.setString(2, item.getCategory());
-            pstmt.setInt(3, item.getPrice());
-            pstmt.setString(4, item.getStatus());
-            pstmt.setString(5, item.getCampus());
-            pstmt.setString(6, item.getMeetingPlace());
-            pstmt.setString(7, item.getMeetingTime());
-            pstmt.setString(8, item.getTradeType());
-            pstmt.setInt(9, item.getWishCount());
-            pstmt.setInt(10, item.getChatCount());
-            pstmt.setString(11, item.getThumbnailUrl());
-            pstmt.setString(12, item.getDescription());
-
-            if (item.getWriterId() != null) {
-                pstmt.setInt(13, item.getWriterId());
-            } else {
-                pstmt.setNull(13, Types.INTEGER);
+            int idx = 1;
+            for (Object p : params) {
+                if (p instanceof String) pstmt.setString(idx++, (String) p);
+                else if (p instanceof Integer) pstmt.setInt(idx++, (Integer) p);
+                else if (p instanceof Long) pstmt.setLong(idx++, (Long) p);
             }
 
-            int affected = pstmt.executeUpdate();
-            if (affected > 0) {
-                try (ResultSet rs = pstmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        generatedId = rs.getLong(1);
-                    }
-                }
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("cnt");
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return generatedId;
+        return 0;
     }
 
     /**
-     * 검색/필터/정렬 목록 조회
+     * 검색/필터/정렬 목록 조회(페이징)
      */
-    public List<MarketItem> findByFilter(
+    public List<MarketItem> findByFilterPaged(
             String keyword,
             String category,
             String campus,
             String tradeType,
             String sort,
-            int limit
+            int offset,
+            int limit,
+            boolean instantOnly
     ) {
         List<MarketItem> list = new ArrayList<>();
 
@@ -104,32 +120,89 @@ public class MarketItemDao {
             params.add(tradeType);
         }
 
+        if (instantOnly) {
+            sb.append(" AND instant_buy = 1");
+        }
+
         String orderBy = "created_at DESC";
         if (sort != null) {
             switch (sort) {
                 case "price_asc":  orderBy = "price ASC"; break;
                 case "price_desc": orderBy = "price DESC"; break;
                 case "wish_desc":  orderBy = "wish_count DESC, created_at DESC"; break;
-                default:           orderBy = "created_at DESC";
+                default:             orderBy = "created_at DESC";
             }
         }
         sb.append(" ORDER BY ").append(orderBy);
-        sb.append(" LIMIT ?");
+        sb.append(" LIMIT ? OFFSET ?");
 
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sb.toString())) {
 
             int idx = 1;
             for (Object p : params) {
-                if (p instanceof String) pstmt.setString(idx++, (String)p);
-                else if (p instanceof Integer) pstmt.setInt(idx++, (Integer)p);
-                else if (p instanceof Long) pstmt.setLong(idx++, (Long)p);
+                if (p instanceof String) pstmt.setString(idx++, (String) p);
+                else if (p instanceof Integer) pstmt.setInt(idx++, (Integer) p);
+                else if (p instanceof Long) pstmt.setLong(idx++, (Long) p);
             }
-            pstmt.setInt(idx, limit);
+            pstmt.setInt(idx++, limit);
+            pstmt.setInt(idx, offset);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    /**
+     * 글 등록 (INSERT)
+     * @return 생성된 PK(id)를 리턴, 실패하면 -1
+     */
+    public long insert(MarketItem item) {
+        String sql = "INSERT INTO market_item " +
+                "(title, category, price, status, campus, " +
+                "meeting_place, meeting_time, trade_type, " +
+                "wish_count, chat_count, thumbnail_url, description, writer_id, instant_buy) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        long generatedId = -1;
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            pstmt.setString(1, item.getTitle());
+            pstmt.setString(2, item.getCategory());
+            pstmt.setInt(3, item.getPrice());
+            pstmt.setString(4, item.getStatus());
+            pstmt.setString(5, item.getCampus());
+            pstmt.setString(6, item.getMeetingPlace());
+            pstmt.setString(7, item.getMeetingTime());
+            pstmt.setString(8, item.getTradeType());
+            pstmt.setInt(9, item.getWishCount());
+            pstmt.setInt(10, item.getChatCount());
+            pstmt.setString(11, item.getThumbnailUrl());
+            pstmt.setString(12, item.getDescription());
+
+            if (item.getWriterId() != null) {
+                pstmt.setInt(13, item.getWriterId());
+            } else {
+                pstmt.setNull(13, Types.INTEGER);
+            }
+
+            pstmt.setInt(14, item.isInstantBuy() ? 1 : 0);
+
+            int affected = pstmt.executeUpdate();
+            if (affected > 0) {
+                try (ResultSet rs = pstmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        generatedId = rs.getLong(1);
+                    }
                 }
             }
 
@@ -137,7 +210,23 @@ public class MarketItemDao {
             e.printStackTrace();
         }
 
-        return list;
+        return generatedId;
+    }
+
+    /**
+     * 검색/필터/정렬 목록 조회
+     */
+    public List<MarketItem> findByFilter(
+            String keyword,
+            String category,
+            String campus,
+            String tradeType,
+            String sort,
+            int limit,
+            boolean instantOnly
+    ) {
+        // 기존 코드 호환용: offset 0으로 첫 페이지만
+        return findByFilterPaged(keyword, category, campus, tradeType, sort, 0, limit, instantOnly);
     }
 
     /**
@@ -173,7 +262,7 @@ public class MarketItemDao {
                 "UPDATE market_item SET " +
                         "title=?, category=?, price=?, campus=?, " +
                         "meeting_place=?, meeting_time=?, trade_type=?, " +
-                        "description=?, status=?"
+                        "description=?, status=?, instant_buy=?"
         );
 
         if (item.getThumbnailUrl() != null) {
@@ -194,6 +283,7 @@ public class MarketItemDao {
             pstmt.setString(idx++, item.getTradeType());
             pstmt.setString(idx++, item.getDescription());
             pstmt.setString(idx++, item.getStatus());
+            pstmt.setInt(idx++, item.isInstantBuy() ? 1 : 0);
 
             if (item.getThumbnailUrl() != null) {
                 pstmt.setString(idx++, item.getThumbnailUrl());
@@ -334,6 +424,18 @@ public class MarketItemDao {
         item.setChatCount(rs.getInt("chat_count"));
         item.setThumbnailUrl(rs.getString("thumbnail_url"));
         item.setDescription(rs.getString("description"));
+
+        // instant_buy / sold info (DB migration 이후 사용)
+        try {
+            item.setInstantBuy(rs.getInt("instant_buy") == 1);
+        } catch (SQLException ignore) {}
+        try {
+            int buyer = rs.getInt("buyer_id");
+            if (!rs.wasNull()) item.setBuyerId(buyer);
+        } catch (SQLException ignore) {}
+        try {
+            item.setSoldAt(rs.getTimestamp("sold_at"));
+        } catch (SQLException ignore) {}
 
         int writer = rs.getInt("writer_id");
         if (!rs.wasNull()) item.setWriterId(writer);

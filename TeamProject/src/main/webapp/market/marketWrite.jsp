@@ -1,307 +1,321 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.sql.*, dao.MarketItemDao, dto.MarketItem" %>
+<%!
+    public String escAttr(String s) {
+        if (s == null) return "";
+        return s.replace("&","&amp;")
+                .replace("<","&lt;")
+                .replace(">","&gt;")
+                .replace("\"","&quot;")
+                .replace("'","&#39;");
+    }
+    public String thumbSrc(String ctx, String raw) {
+        if (raw == null) return null;
+        String s = raw.trim();
+        if (s.isEmpty()) return null;
+        if (s.startsWith("http://") || s.startsWith("https://")) return s;
+        if (s.startsWith(ctx + "/")) return s;
+        if (s.startsWith("/")) return ctx + s;
+        return ctx + "/" + s;
+    }
+%>
 <%
     request.setCharacterEncoding("UTF-8");
     String ctx = request.getContextPath();
+    request.setAttribute("currentMenu", "market");
 
-    // 세션에 로그인 정보가 있다면, 회원 PK 가져와서 숨은 필드로 보낼 수도 있음
-    // Integer memberNo = (Integer)session.getAttribute("memberNo");
+    String userId = (String) session.getAttribute("userId");
+    Integer memberNo = (Integer) session.getAttribute("memberNo");
+
+    if (userId == null) {
+        out.println("<script>alert('로그인이 필요합니다.'); location.href='" + ctx + "/login.jsp';</script>");
+        return;
+    }
+
+    // memberNo 보정
+    if (memberNo == null) {
+        try (Connection conn = util.DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT MEMBER_NO FROM MEMBER WHERE USER_ID=?")) {
+            ps.setString(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    memberNo = rs.getInt("MEMBER_NO");
+                    session.setAttribute("memberNo", memberNo);
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    if (memberNo == null) {
+        out.println("<script>alert('회원 정보를 확인할 수 없습니다.'); location.href='" + ctx + "/main.jsp';</script>");
+        return;
+    }
+
+    // 수정 모드
+    boolean editMode = false;
+    long editItemId = 0;
+    MarketItem editItem = null;
+
+    String editIdStr = request.getParameter("itemId");
+    if (editIdStr != null && !editIdStr.trim().isEmpty()) {
+        try { editItemId = Long.parseLong(editIdStr.trim()); } catch(Exception ignore) {}
+        if (editItemId > 0) {
+            MarketItemDao dao = new MarketItemDao();
+            editItem = dao.findById(editItemId);
+            if (editItem == null) {
+                out.println("<script>alert('상품을 찾을 수 없습니다.'); location.href='" + ctx + "/market/marketMain.jsp';</script>");
+                return;
+            }
+            if (editItem.getWriterId() == null || editItem.getWriterId().intValue() != memberNo.intValue()) {
+                out.println("<script>alert('수정 권한이 없습니다.'); location.href='" + ctx + "/market/marketView.jsp?id=" + editItemId + "';</script>");
+                return;
+            }
+            editMode = true;
+        }
+    }
+
+    String pageTitle = editMode ? "상품 수정" : "상품 등록";
+    String actionUrl = editMode ? (ctx + "/market/update") : (ctx + "/market/write?id=" + memberNo);
+
+    String vTitle = editMode ? escAttr(editItem.getTitle()) : "";
+    String vCategory = editMode ? escAttr(editItem.getCategory()) : "교재 · 전공책";
+    String vPrice = editMode ? String.valueOf(editItem.getPrice()) : "";
+    String vCampus = editMode ? escAttr(editItem.getCampus()) : "강남대 정문";
+    String vMeetingPlace = editMode ? escAttr(editItem.getMeetingPlace()) : "";
+    String vMeetingTime = editMode ? escAttr(editItem.getMeetingTime()) : "";
+    String vTradeType = editMode ? escAttr(editItem.getTradeType()) : "DIRECT";
+    String vDesc = editMode ? escAttr(editItem.getDescription()) : "";
+    String vStatus = editMode ? ((editItem.getStatus()==null || editItem.getStatus().trim().isEmpty()) ? "ON_SALE" : escAttr(editItem.getStatus())) : "ON_SALE";
+    boolean vInstantBuy = editMode && editItem != null && editItem.isInstantBuy();
+    String thumb = editMode ? editItem.getThumbnailUrl() : null;
+    String thumbUrl = editMode ? thumbSrc(ctx, thumb) : null;
 %>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>KangnamTime – 중고상품 등록</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-
+    <meta charset="UTF-8"/>
+    <title><%=pageTitle%> - 강남마켓</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #050816;
-            color: #e5e7eb;
+        * { box-sizing: border-box; }
+        body { margin:0; background:#050816; color:#e5e7eb; font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+        main { max-width: 980px; margin: 0 auto; padding: 18px 16px 44px; }
+        .top {
+            margin-top: 10px;
+            display:flex;
+            align-items:flex-end;
+            justify-content:space-between;
+            gap: 10px;
         }
-        a { color: inherit; text-decoration: none; }
-
-        .navbar {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 60px;
-            background: rgba(5, 10, 25, 0.96);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-        }
-        .navbar-left { display: flex; align-items: center; gap: 12px; }
-        .navbar-logo {
-            width: 32px;
-            height: 32px;
+        h1 { margin:0; font-size: 20px; }
+        .sub { color:#94a3b8; font-size: 12px; margin-top: 6px; }
+        .btn {
+            border:none;
             border-radius: 999px;
-            background: radial-gradient(circle at 30% 30%, #4f9cff, #1f2937);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: #f9fafb;
-            font-size: 14px;
-        }
-        .navbar-title { font-size: 18px; font-weight: 700; }
-        .navbar-menu { display: flex; gap: 24px; font-size: 14px; }
-        .navbar-menu a { opacity: 0.7; transition: opacity 0.15s ease, color 0.15s ease; }
-        .navbar-menu a:hover { opacity: 1; color: #60a5fa; }
-        .navbar-menu .active { opacity: 1; color: #60a5fa; font-weight: 600; }
-        .navbar-right { display: flex; gap: 10px; }
-        .btn-outline {
-            padding: 6px 16px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.6);
+            padding: 10px 12px;
+            cursor:pointer;
             font-size: 13px;
-            background: transparent;
-            color: #e5e7eb;
-            cursor: pointer;
+            color:#e5e7eb;
+            background: rgba(148,163,184,.12);
+            border: 1px solid rgba(148,163,184,.20);
+            transition: transform .08s ease, filter .15s ease, border-color .15s ease;
         }
+        .btn:hover { filter: brightness(1.08); border-color: rgba(96,165,250,.55); transform: translateY(-1px); }
         .btn-primary {
-            padding: 6px 18px;
-            border-radius: 999px;
-            border: none;
-            font-size: 13px;
             background: linear-gradient(135deg, #2563eb, #38bdf8);
-            color: white;
-            cursor: pointer;
-        }
-
-        .page-wrapper {
-            max-width: 800px;
-            margin: 24px auto 60px;
-            padding: 0 20px;
-        }
-
-        .card {
-            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.09), rgba(15, 23, 42, 0.98));
-            border-radius: 22px;
-            padding: 20px 22px 24px;
-            border: 1px solid rgba(148, 163, 184, 0.16);
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
-        }
-
-        h1 {
-            font-size: 22px;
-            margin-bottom: 8px;
-        }
-        .subtitle {
-            font-size: 13px;
-            color: #9ca3af;
-            margin-bottom: 18px;
-        }
-
-        .form-row {
-            margin-bottom: 14px;
-        }
-        .form-row label {
-            display: block;
-            font-size: 13px;
-            margin-bottom: 4px;
-        }
-        .form-row label span {
-            color: #f97316;
-            margin-left: 4px;
-        }
-        .form-row input[type="text"],
-        .form-row input[type="number"],
-        .form-row select,
-        .form-row textarea {
-            width: 100%;
-            padding: 8px 10px;
-            border-radius: 10px;
-            border: 1px solid rgba(148, 163, 184, 0.4);
-            background: rgba(15, 23, 42, 0.98);
-            color: #e5e7eb;
-            font-size: 13px;
-        }
-        .form-row textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        .form-row-inline {
-            display: flex;
-            gap: 10px;
-        }
-        .form-row-inline .form-row {
-            flex: 1;
-        }
-
-        .help-text {
-            font-size: 11px;
-            color: #9ca3af;
-            margin-top: 2px;
-        }
-
-        .form-actions {
-            margin-top: 18px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        .btn-secondary {
-            padding: 7px 16px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.7);
-            background: transparent;
-            color: #e5e7eb;
-            font-size: 13px;
-            cursor: pointer;
-        }
-        .btn-submit {
-            padding: 7px 18px;
-            border-radius: 999px;
             border: none;
-            background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #f9fafb;
+            font-weight: 800;
+        }
+        .btn-danger {
+            background: rgba(239,68,68,.15);
+            border-color: rgba(239,68,68,.35);
+        }
+        .card {
+            margin-top: 14px;
+            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.10), rgba(15, 23, 42, 0.98));
+            border-radius: 24px;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.85);
+            padding: 18px;
+        }
+        .grid { display:grid; grid-template-columns: 1fr 300px; gap: 14px; }
+        label { display:block; font-size: 12px; color:#cbd5e1; margin: 12px 0 6px; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(148,163,184,.18);
+            background: rgba(2,6,23,.55);
+            color:#e5e7eb;
+            outline: none;
+            font-family: inherit;
             font-size: 13px;
-            cursor: pointer;
-            font-weight: 600;
         }
-        .btn-submit:hover {
-            filter: brightness(1.1);
+        textarea { min-height: 140px; resize: vertical; }
+        .row2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .help { margin-top: 6px; color:#94a3b8; font-size: 11px; }
+        .toggle-row{ margin-top:12px; padding:12px 12px; border-radius: 16px; border: 1px solid rgba(148,163,184,.16); background: rgba(2,6,23,.38); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .toggle-row .t-title{ font-size:13px; font-weight:800; }
+        .toggle-row .t-desc{ font-size:11px; color:#94a3b8; margin-top:4px; }
+        .switch{ position:relative; width:48px; height:28px; }
+        .switch input{ display:none; }
+        .slider{ position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background: rgba(148,163,184,.22); border:1px solid rgba(148,163,184,.25); border-radius:999px; transition: .2s; }
+        .slider:before{ position:absolute; content:""; height:22px; width:22px; left:3px; top:50%; transform: translateY(-50%); background:white; border-radius:50%; transition:.2s; }
+        .switch input:checked + .slider{ background: rgba(34,197,94,.25); border-color: rgba(34,197,94,.45); }
+        .switch input:checked + .slider:before{ transform: translate(20px,-50%); }
+        .thumbbox {
+            border-radius: 18px;
+            border: 1px dashed rgba(148,163,184,.22);
+            background: rgba(2,6,23,.35);
+            padding: 12px;
+            height: 100%;
         }
-
-        @media (max-width: 768px) {
-            .navbar {
-                padding: 12px 16px;
-            }
-            .page-wrapper {
-                padding: 0 14px;
-            }
+        .thumb {
+            border-radius: 16px;
+            overflow:hidden;
+            background: rgba(148,163,184,.10);
+            height: 220px;
+            display:flex; align-items:center; justify-content:center;
+            margin-bottom: 10px;
+        }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; display:block; }
+        .thumb .no { color:#94a3b8; font-size: 12px; }
+        .actions { margin-top: 14px; display:flex; gap: 8px; flex-wrap:wrap; justify-content:flex-end; }
+        @media (max-width: 880px) {
+            .grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+<jsp:include page="../common/gnb.jsp"/>
 
-<header class="navbar">
-    <div class="navbar-left">
-        <div class="navbar-logo">KT</div>
-        <div class="navbar-title">KangnamTime</div>
+<main>
+    <div class="top">
+        <div>
+            <h1><%=pageTitle%></h1>
+            <div class="sub">필수 항목만 빠르게 채우고, 나머지는 나중에 수정해도 돼요.</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+            <button class="btn" onclick="location.href='<%=ctx%>/market/marketMain.jsp'">목록</button>
+            <% if (editMode) { %>
+                <button class="btn" onclick="location.href='<%=ctx%>/market/marketView.jsp?id=<%=editItemId%>'">상세</button>
+            <% } %>
+        </div>
     </div>
-    <nav class="navbar-menu">
-        <a href="<%=ctx%>/main.jsp">홈</a>
-        <a href="<%=ctx%>/timetable/timetableMain.jsp">시간표</a>
-        <a href="<%=ctx%>/board/mainBoard.jsp">게시판</a>
-        <a href="#">강의평가</a>
-        <a href="#">캠퍼스 정보</a>
-        <a href="<%=ctx%>/market/marketMain.jsp" class="active">중고거래</a>
-    </nav>
-    <div class="navbar-right">
-        <button class="btn-outline" onclick="location.href='<%=ctx%>/login.jsp'">로그인</button>
-        <button class="btn-primary" onclick="location.href='<%=ctx%>/signup.jsp'">회원가입</button>
-    </div>
-</header>
 
-<main class="page-wrapper">
     <section class="card">
-        <h1>중고상품 등록</h1>
-        <p class="subtitle">
-            실제 거래할 정보를 정확하게 입력해주세요. 제목, 가격, 거래 위치는 특히 중요합니다.
-        </p>
+        <form method="post" action="<%=actionUrl%>" enctype="multipart/form-data">
+            <% if (editMode) { %>
+                <input type="hidden" name="itemId" value="<%=editItemId%>"/>
+            <% } %>
 
-        <form method="post" action="<%=ctx%>/market/marketWriteProc.jsp" enctype="multipart/form-data">
-            <div class="form-row">
-                <label>제목<span>*</span></label>
-                <input type="text" name="title" required placeholder="예) 운영체제 공룡책 10판 (거의 새책)">
+            <div class="grid">
+                <!-- 왼쪽 폼 -->
+                <div>
+                    <label>제목 <span style="color:#fca5a5;">*</span></label>
+                    <input type="text" name="title" maxlength="100" required value="<%=vTitle%>" placeholder="예) 운영체제 전공책(상태좋음)"/>
+
+                    <div class="row2">
+                        <div>
+                            <label>카테고리 <span style="color:#fca5a5;">*</span></label>
+                            <select name="category" required>
+                                <option value="교재 · 전공책" <%= "교재 · 전공책".equals(vCategory) ? "selected" : "" %>>교재 · 전공책</option>
+                                <option value="전자기기" <%= "전자기기".equals(vCategory) ? "selected" : "" %>>전자기기</option>
+                                <option value="자취템" <%= "자취템".equals(vCategory) ? "selected" : "" %>>가구 · 자취템</option>
+                                <option value="패션 · 잡화" <%= "패션 · 잡화".equals(vCategory) ? "selected" : "" %>>패션 · 잡화</option>
+                                <option value="기타" <%= "기타".equals(vCategory) ? "selected" : "" %>>기타</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>가격(원) <span style="color:#fca5a5;">*</span></label>
+                            <input type="number" name="price" required min="0" value="<%=vPrice%>" placeholder="0"/>
+                            <div class="help">콤마 없이 숫자만 입력해주세요.</div>
+                        </div>
+                    </div>
+
+                    <div class="row2">
+                        <div>
+                            <label>캠퍼스/장소 <span style="color:#fca5a5;">*</span></label>
+                            <select name="campus" required>
+                                <option value="강남대 정문" <%= "강남대 정문".equals(vCampus) ? "selected" : "" %>>강남대 정문</option>
+                                <option value="기숙사" <%= "기숙사".equals(vCampus) ? "selected" : "" %>>기숙사</option>
+                                <option value="역 인근" <%= "역 인근".equals(vCampus) ? "selected" : "" %>>역 인근</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>거래 방식 <span style="color:#fca5a5;">*</span></label>
+                            <select name="tradeType" required>
+                                <option value="DIRECT" <%= "DIRECT".equalsIgnoreCase(vTradeType) ? "selected" : "" %>>직거래</option>
+                                <option value="DELIVERY" <%= "DELIVERY".equalsIgnoreCase(vTradeType) ? "selected" : "" %>>택배</option>
+                                <option value="BOTH" <%= "BOTH".equalsIgnoreCase(vTradeType) ? "selected" : "" %>>직거래+택배</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="toggle-row">
+                        <div>
+                            <div class="t-title">바로구매(즉시구매) 가능</div>
+                            <div class="t-desc">바로구매 상품만 장바구니/구매가 가능해요. 구매 시 자동으로 거래완료 처리되고, 판매자는 송장번호를 입력해 배송현황을 공유할 수 있어요.</div>
+                        </div>
+                        <label class="switch" title="바로구매 가능">
+                            <input type="checkbox" name="instantBuy" value="1" <%= vInstantBuy ? "checked" : "" %>>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="row2">
+                        <div>
+                            <label>거래 장소(상세)</label>
+                            <input type="text" name="meetingPlace" value="<%=vMeetingPlace%>" placeholder="예) 도서관 앞, 공학관 로비"/>
+                        </div>
+                        <div>
+                            <label>선호 시간</label>
+                            <input type="text" name="meetingTime" value="<%=vMeetingTime%>" placeholder="예) 평일 18~21시"/>
+                        </div>
+                    </div>
+
+                    <% if (editMode) { %>
+                        <label>거래 상태</label>
+                        <select name="status">
+                            <option value="ON_SALE"  <%= "ON_SALE".equalsIgnoreCase(vStatus) ? "selected" : "" %>>판매중</option>
+                            <option value="RESERVED" <%= "RESERVED".equalsIgnoreCase(vStatus) ? "selected" : "" %>>예약중</option>
+                            <option value="SOLD_OUT" <%= "SOLD_OUT".equalsIgnoreCase(vStatus) ? "selected" : "" %>>거래완료</option>
+                        </select>
+                    <% } %>
+
+                    <label>상세 설명</label>
+                    <textarea name="description" placeholder="상태, 구성품, 하자 여부, 거래 희망사항 등을 적어주세요."><%=vDesc%></textarea>
+                </div>
+
+                <!-- 오른쪽 썸네일 -->
+                <div class="thumbbox">
+                    <div class="thumb">
+                        <% if (thumbUrl != null) { %>
+                            <img src="<%=thumbUrl%>" alt="현재 썸네일"/>
+                        <% } else { %>
+                            <div class="no">썸네일 미리보기</div>
+                        <% } %>
+                    </div>
+                    <label>썸네일 이미지</label>
+                    <input type="file" name="thumbnail" accept="image/*"/>
+                    <div class="help">
+                        업로드된 파일은 <code>webapp/resources/MarketThumbnail</code> 경로로 저장됩니다.<br/>
+                        <% if (editMode) { %>새 이미지를 업로드하면 기존 썸네일이 교체됩니다.<% } else { %>이미지는 선택사항입니다.<% } %>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-row-inline">
-                <div class="form-row">
-                    <label>카테고리<span>*</span></label>
-                    <select name="category" required>
-                        <option value="">선택하세요</option>
-                        <option value="교재 · 전공책">교재 · 전공책</option>
-                        <option value="전자기기">전자기기</option>
-                        <option value="자취템">자취템</option>
-                        <option value="패션 · 잡화">패션 · 잡화</option>
-                        <option value="기타">기타</option>
-                    </select>
-                </div>
-                <div class="form-row">
-                    <label>가격(원)<span>*</span></label>
-                    <input type="number" name="price" min="0" required placeholder="예) 18000">
-                    <p class="help-text">무료 나눔이면 0원을 입력해주세요.</p>
-                </div>
-            </div>
-
-            <div class="form-row-inline">
-                <div class="form-row">
-                    <label>캠퍼스/위치<span>*</span></label>
-                    <select name="campus" required>
-                        <option value="">선택하세요</option>
-                        <option value="강남대 정문">강남대 정문</option>
-                        <option value="기숙사">기숙사</option>
-                        <option value="역 인근">역 인근</option>
-                    </select>
-                </div>
-                <div class="form-row">
-                    <label>상세 위치</label>
-                    <input type="text" name="meetingPlace" placeholder="예) 교양관 근처, 기숙사 1동 로비 등">
-                </div>
-            </div>
-
-            <div class="form-row-inline">
-                <div class="form-row">
-                    <label>선호 거래 시간</label>
-                    <input type="text" name="meetingTime" placeholder="예) 오늘 18:00, 이번 주말 등">
-                </div>
-                <div class="form-row">
-                    <label>거래 방식<span>*</span></label>
-                    <select name="tradeType" required>
-                        <option value="">선택하세요</option>
-                        <option value="DIRECT">직거래</option>
-                        <option value="DELIVERY">택배</option>
-                        <option value="BOTH">직거래+택배</option>
-                    </select>
-                </div>
-            </div>
-            
-		    <div class="form-row">
-		        <label>썸네일 업로드</label>
-		        <input type="file" name="thumbnail" accept="image/*" id="thumbInput">
-		
-		        <div style="margin-top:10px;">
-		            <img id="thumbPreview" style="max-width:180px; border-radius:10px; display:none;">
-		        </div>
-		
-		        <script>
-		            document.getElementById("thumbInput").addEventListener("change", function(e) {
-		                const file = e.target.files[0];
-		                if (!file) return;
-		
-		                let reader = new FileReader();
-		                reader.onload = function(ev) {
-		                    const img = document.getElementById("thumbPreview");
-		                    img.src = ev.target.result;
-		                    img.style.display = "block";
-		                };
-		                reader.readAsDataURL(file);
-		            });
-		        </script>
-		
-		        <p class="help-text">이미지를 선택하면 즉시 미리보기가 나타납니다.</p>
-		    </div>
-
-            <div class="form-row">
-                <label>상세 설명</label>
-                <textarea name="description" placeholder="상품 상태, 사용 기간, 구성품, 흠집 여부 등을 자세히 적어주세요."></textarea>
-            </div>
-
-            <div class="form-actions">
-                <button type="button" class="btn-secondary"
-                        onclick="location.href='<%=ctx%>/market/marketMain.jsp'">취소</button>
-                <button type="submit" class="btn-submit">등록하기</button>
+            <div class="actions">
+                <% if (editMode) { %>
+                    <button type="submit"
+                            class="btn btn-danger"
+                            formaction="<%=ctx%>/market/delete"
+                            formmethod="post"
+                            onclick="return confirm('정말 삭제할까요? (복구 불가)');">삭제</button>
+                <% } %>
+                <button type="button" class="btn" onclick="history.back();">취소</button>
+                <button type="submit" class="btn btn-primary"><%= editMode ? "수정 저장" : "등록하기" %></button>
             </div>
         </form>
     </section>

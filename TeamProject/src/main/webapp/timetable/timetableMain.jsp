@@ -173,6 +173,10 @@ body {
     position: relative;
     margin-top: 16px;
     z-index: 0;
+
+    /* ✅ (추가) 분→px 배치용 변수 (JS에서 실제 rowHeight 기준으로 갱신됨) */
+    --hour-h: 80px;
+    --min-px: 1.333333px;
 }
 
 /* 오늘 요일 컬럼 하이라이트(반투명 오버레이) */
@@ -213,13 +217,11 @@ body {
     border-color: #2f3f63;
 }
 
-
 /* 🔽 바디 셀 컬럼 강조용 */
 .timetable-table tbody td.today-col {
     background: #12213c;           /* 헤더와 비슷한 톤으로 진하게 */
     border-color: #2f3f63;
 }
-
 
 .timetable-table thead th {
     background: #111827;
@@ -251,13 +253,22 @@ body {
     overflow: visible;
 }
 
-/* 강의 박스 */
+/* ✅ 강의 박스: 분 단위 배치로 변경 (기존 6%/88% 제거) */
 .subject-box {
     position: absolute;
-    top: 6%;
+
+    /* (추가) 기본값: 혹시 style이 없을 때 깨지는 것 방지 */
+    --row-start: 0;
+    --start: 0;
+    --end: 0;
+
+    /* ✅ 핵심: 분 -> px */
+    top: calc((var(--start) - var(--row-start)) * var(--min-px));
+    height: calc((var(--end) - var(--start)) * var(--min-px));
+
     left: 6%;
     width: 88%;
-    height: 88%;
+
     padding: 10px 12px;
 
     background: #111827;  /* 불투명: 뒤의 시간 선을 가림 */
@@ -326,9 +337,7 @@ body {
     left: var(--line-start, 0); /* JS에서 설정 */
     right: 0;
     border-top: 2px solid #347AE2;
-  
 }
-
 
 /* 라벨을 선의 정중앙 + 시간 칸 중앙에 맞춤 (left는 JS로 설정) */
 .current-time-label {
@@ -348,7 +357,6 @@ body {
     border-radius: 999px;
     box-shadow: 0 0 0 1px rgba(15,23,42,0.9);
 }
-
 
 /* 과목 툴팁 */
 #lecture-tooltip {
@@ -521,6 +529,7 @@ body {
                 <!-- 🔹 강의 셀에도 data-day -->
                 <td rowspan="<%= rowspan %>" data-day="<%= day %>">
     <div class="subject-box"
+         style="--row-start:<%= times[i] %>; --start:<%= target.start %>; --end:<%= target.end %>;"
          data-day="<%= day %>"
          data-start="<%= target.start %>"
          data-end="<%= target.end %>"
@@ -666,6 +675,10 @@ body {
         const rowTop    = cellRect.top - wrapperRect.top;
         const rowHeight = cellRect.height;
 
+        /* ✅ (추가) 과목 박스 분단위 배치 스케일을 현재 rowHeight 기준으로 맞춤 */
+        wrapper.style.setProperty('--hour-h', rowHeight + 'px');
+        wrapper.style.setProperty('--min-px', (rowHeight / 60) + 'px');
+
         const startMinutes = parseInt(wrapper.dataset.start, 10);
         const endMinutes   = parseInt(wrapper.dataset.end, 10);
 
@@ -705,8 +718,6 @@ body {
             const lineStart  = (labelRect.right - wrapperRect.left);
             line.style.setProperty('--line-start', lineStart + 'px');
         }
-
-
     }
 
     function initLectureTooltip() {

@@ -1,3 +1,4 @@
+use KANGNAMTIME;
 INSERT INTO member (USER_ID, USER_PW, NAME, MAJOR)
 VALUES
 ('admin', 'fe2592b42a727e977f055947385b709cc82b16b9a87f88c6abf3900d65d0cdc3', '교수님', '컴퓨터공학과'),

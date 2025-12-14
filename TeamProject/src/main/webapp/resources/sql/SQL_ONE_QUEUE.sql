@@ -11,8 +11,7 @@ CREATE DATABASE IF NOT EXISTS kangnamtime
 USE kangnamtime;
 
 -- kangnamtime 라는 계정 생성 (비번은 너가 원하는 걸로)
-CREATE USER 'kangnamtime'@'localhost'
-  IDENTIFIED WITH mysql_native_password BY '4321';
+CREATE USER IF NOT EXISTS 'kangnamtime'@'localhost' IDENTIFIED BY '4321';
 
 -- DB 권한 주기 (DB 이름 kangnamtime 라고 가정)
 GRANT ALL PRIVILEGES ON kangnamtime.* TO 'kangnamtime'@'localhost';
@@ -87,19 +86,19 @@ CREATE TABLE BOARD_POST (
 -- ==========================================
 -- 4. BOARD_COMMENT (댓글)
 -- ==========================================
-CREATE TABLE BOARD_POST (
-    POST_NO        INT AUTO_INCREMENT PRIMARY KEY,
-    USER_ID        VARCHAR(50) NOT NULL,
-    TITLE          VARCHAR(200) NOT NULL,
-    CONTENT        TEXT NOT NULL,
-    HIT            INT DEFAULT 0,
-    LIKE_COUNT     INT DEFAULT 0,
-    SCRAP_COUNT    INT DEFAULT 0,
-    COMMENT_COUNT  INT DEFAULT 0,
-    CREATED_AT     DATETIME DEFAULT NOW(),
 
-    CONSTRAINT FK_POST_MEMBER
-        FOREIGN KEY (USER_ID)
+CREATE TABLE BOARD_COMMENT (
+    COMMENT_NO   INT AUTO_INCREMENT PRIMARY KEY,
+    POST_NO      INT          NOT NULL,
+    USER_ID      VARCHAR(50)  NOT NULL,
+    CONTENT      TEXT         NOT NULL,
+    CREATED_AT   DATETIME     DEFAULT NOW(),
+    UPDATED_AT   DATETIME,
+    IS_DELETED   CHAR(1)      NOT NULL DEFAULT 'N',
+    CONSTRAINT FK_BC_POST FOREIGN KEY (POST_NO)
+        REFERENCES BOARD_POST(POST_NO)
+        ON DELETE CASCADE,
+    CONSTRAINT FK_BC_MEMBER FOREIGN KEY (USER_ID)
         REFERENCES MEMBER(USER_ID)
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -217,7 +216,7 @@ CREATE TABLE USER_TIMETABLE (
     USER_ID     VARCHAR(50)      NOT NULL,        -- 로그인 유저 ID
     TITLE       VARCHAR(200)     NOT NULL,        -- 과목명
     PROFESSOR   VARCHAR(100),                     -- 교수명
-    DAY         TINYINT          NOT NULL,        -- 요일 (0~4 or 1~5; 기존 로직 그대로)
+    DAY         TINYINT          NOT NULL,        -- 요일 (0~4 or 1~5 기존 로직 그대로)
     START_MIN   INT              NOT NULL,        -- 시작 시간 (분 단위, 9시=540)
     END_MIN     INT              NOT NULL,        -- 종료 시간 (분 단위)
     UPDATED_AT  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP  -- 동기화 시각

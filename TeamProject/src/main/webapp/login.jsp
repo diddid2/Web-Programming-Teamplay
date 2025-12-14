@@ -91,17 +91,7 @@
     </style>
 </head>
 <body>
-<header>
-    <div class="nav-inner">
-        <div class="logo">
-            <div class="logo-mark">KT</div>
-            <span>강남타임</span>
-        </div>
-        <div>
-            <a href="main.jsp">← 메인으로</a>
-        </div>
-    </div>
-</header>
+<jsp:include page="common/gnb.jsp"/>
 
 <main>
     <h2>로그인</h2>
